@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Nieuwbouw van betaalbare koop in Nederland</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+:root{--ink:#1c1a17;--muted:#6f685e;--line:#e4ddd1;--paper:#f7f3ea;--card:#fffdf8;--accent:#9a3b2e;--gone:#8f9b86;--active:#2f5f5a;--facil:#c98b3a;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:'IBM Plex Sans',sans-serif;color:var(--ink);background:var(--paper)}
+#wrap{display:flex;height:100vh;width:100vw}
+#panel{width:288px;flex:0 0 288px;background:var(--card);border-right:1px solid var(--line);padding:24px 22px;overflow-y:auto}
+#map{flex:1;height:100%;min-width:300px}
+#scatter{width:430px;flex:0 0 430px;background:var(--card);border-left:1px solid var(--line);padding:22px 22px;overflow-y:auto;position:relative;transition:flex-basis .28s ease,width .28s ease,padding .28s ease}
+#scatter.hidden{flex-basis:0;width:0;min-width:0;padding-left:0;padding-right:0;border-left:none;overflow:hidden}
+#sccollapse{position:absolute;top:18px;right:16px;border:1px solid var(--line);background:var(--paper);color:var(--muted);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:15px;line-height:22px;text-align:center;padding:0}
+#sccollapse:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#sctab{position:fixed;top:50%;right:0;transform:translateY(-50%);writing-mode:vertical-rl;background:var(--ink);color:var(--paper);border:none;padding:16px 9px;border-radius:9px 0 0 9px;cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:.08em;display:none;z-index:1000;box-shadow:-2px 0 8px rgba(0,0,0,.08)}
+#sctab.show{display:block}
+h1{font-family:'Fraunces',serif;font-weight:600;font-size:22px;line-height:1.15;margin:0 0 2px}
+.sub{color:var(--muted);font-size:12.5px;letter-spacing:.02em;margin:0 0 20px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:600;margin:0 0 10px}
+.toggle{display:flex;gap:6px;margin:0 0 12px}
+.toggle button{flex:1;font-family:inherit;font-size:12px;padding:9px 6px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:8px;cursor:pointer;transition:.15s}
+.toggle button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.toggle.tg5{flex-wrap:wrap;gap:5px}
+.toggle.tg5 button{flex:1 1 auto;font-size:11px;padding:8px 7px;min-width:0}
+.stepno{float:right;color:var(--muted);font-weight:500;letter-spacing:.08em;font-size:10px}
+.modehint{font-size:12px;line-height:1.5;color:var(--ink);background:var(--paper);border-left:2px solid var(--accent);border-radius:0 7px 7px 0;padding:9px 11px;margin:0 0 15px;min-height:1px}
+.modehint b{font-family:'Fraunces',serif;font-weight:600}
+.catleg{display:none;flex-direction:column;gap:6px;margin:0 0 16px}
+.catleg .row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink)}
+.catleg .sw{width:13px;height:13px;border-radius:50%;flex:0 0 13px}
+.moran{display:none;font-size:11.5px;line-height:1.55;color:var(--muted);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin:0 0 16px}
+.moran .mrow{display:flex;justify-content:space-between;padding:3px 0}
+.moran .mrow b{font-family:'Fraunces',serif;color:var(--ink)}
+.moran .mrow.gone b{color:var(--gone)}
+.moran .cap{margin-top:7px;padding-top:7px;border-top:1px dotted var(--line);color:var(--ink)}
+.studio-sw{margin:0 0 14px;font-size:12px}
+.rtabs{display:flex;gap:6px;margin:0 0 16px}
+.rtabs button{flex:1;font-family:inherit;font-size:12px;padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:8px;cursor:pointer}
+.rtabs button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.resblock{margin:0 0 26px;padding:0 0 22px;border-bottom:1px dotted var(--line)}
+.resblock:last-child{border-bottom:none}
+.rescap{font-size:11.5px;line-height:1.55;color:var(--muted);margin:8px 2px 0}
+.rescap b{font-family:'Fraunces',serif;color:var(--ink)}
+.rescap .good{color:var(--active);font-weight:600}
+.logslide{margin:12px 0 4px;padding:12px 13px;background:var(--paper);border:1px solid var(--line);border-radius:9px}
+.logslide-h{font-size:11px;color:var(--muted);margin-bottom:9px;letter-spacing:.02em}
+.logslide input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.calc{margin-top:8px}
+.calc-row{margin:0 0 15px}
+.calc-lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.calc-lbl output{font-family:'Fraunces',serif;font-size:14px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:600}
+.calc-row input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.calc-ref{font-size:11px;color:var(--muted);line-height:1.5;margin:4px 2px 12px}
+.calc-out{font-size:12.5px;line-height:1.6;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:12px 13px;margin:0}
+.calc-out .good{color:var(--active);font-weight:600}
+.calc-h3{font-family:'Fraunces',serif;font-weight:600;font-size:14px;margin:22px 0 8px;color:var(--ink)}
+.calc-derived{font-size:11px;color:var(--muted);line-height:1.7;margin:2px 2px 4px}
+.calc-derived b{color:var(--ink)}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:16px 0 6px}
+.calc-cell .cv{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:2px}
+.calc-cell label{font-size:9.5px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.calc-cell output{font-family:'Fraunces',serif;font-size:12.5px;color:var(--ink);font-weight:600;white-space:nowrap}
+.calc-cell input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer;height:14px;margin:0}
+.logout{margin-top:10px;font-size:12px;line-height:1.55;color:var(--ink)}
+.logout .big{font-family:'Fraunces',serif;font-size:15px;font-weight:600}
+.logout .pred{color:var(--accent)}
+.logout .real{color:var(--active)}
+.logout .band{color:var(--muted);font-size:11px}
+.lab{margin-top:6px}
+.lab-row{margin:0 0 14px}
+.lab-lbl{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.ytog{display:flex;gap:6px}
+.ytog button{flex:1;font-family:inherit;font-size:12px;padding:7px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:7px;cursor:pointer}
+.ytog button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.varchips{display:flex;flex-wrap:wrap;gap:6px}
+.varchip{font-family:inherit;font-size:11.5px;padding:6px 11px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:20px;cursor:pointer;transition:.12s;white-space:nowrap}
+.varchip.on{background:var(--active);color:#fff;border-color:var(--active)}
+.varchip.keyon{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.varchip.keyoff{background:var(--paper);color:var(--accent);border:1.5px dashed var(--accent);font-weight:600}
+.varchip.locked{background:var(--accent);color:#fff;border-color:var(--accent);cursor:default}
+.modtog{display:block;font-size:12px;margin:2px 0 14px;color:var(--ink)}
+.modtog b{font-family:'Fraunces',serif}
+.labtable{font-size:11.5px;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-bottom:10px}
+.labtable table{width:100%;border-collapse:collapse}
+.labtable th{background:var(--paper);text-align:left;padding:7px 9px;font-weight:600;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.labtable td{padding:7px 9px;border-bottom:1px solid var(--paper)}
+.labtable tr:last-child td{border-bottom:none}
+.labtable .num{text-align:right;font-variant-numeric:tabular-nums}
+.labtable .vname{font-family:'Fraunces',serif}
+.labtable tr.mgi-row{background:rgba(154,59,46,.05)}
+.labtable tr.mgi-row .vname{color:var(--accent);font-weight:600}
+.labtable .star{color:var(--active);font-weight:700}
+.labtable .ns{color:var(--muted)}
+.labtable tr.faded td{opacity:.4}
+.labfit{font-size:11.5px;color:var(--muted);line-height:1.5;padding:0 2px}
+.labfit b{font-family:'Fraunces',serif;color:var(--ink)}
+.labfit .r2{color:var(--active);font-weight:600}
+.leg{margin:0 0 16px;position:relative}
+.legbar{height:11px;border-radius:6px;margin:7px 0 5px}
+.legends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.tick65{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:var(--ink);font-weight:600}
+.tick65:after{content:'';position:absolute;left:50%;top:14px;width:1px;height:11px;background:var(--ink)}
+.shapeleg{font-size:11.5px;color:var(--muted);margin:0 0 18px;display:none}
+.shapeleg .f{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--muted);vertical-align:-1px;margin-right:4px}
+.shapeleg .o{display:inline-block;width:11px;height:11px;border-radius:50%;border:1.6px solid var(--muted);vertical-align:-1px;margin:0 4px 0 12px}
+.stat{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dotted var(--line)}
+.stat b{font-family:'Fraunces',serif;font-weight:600}
+.opt{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.optHead{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:600;padding:0}
+.optBody{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.optBody.open{max-height:560px}
+.optlbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:16px 0 7px}
+#fGem{width:100%;font-family:inherit;font-size:12.5px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-family:inherit;font-size:11.5px;padding:5px 9px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:20px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.switch{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);cursor:pointer;margin-top:4px}
+.switch input{accent-color:var(--ink);width:15px;height:15px}
+.reset{margin-top:16px;width:100%;font-family:inherit;font-size:12px;padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:8px;cursor:pointer}
+.reset:hover{border-color:var(--accent);color:var(--accent)}
+.note{font-size:11.5px;line-height:1.55;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;margin-top:18px}
+.dash{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px dashed #b4ab9c;vertical-align:-1px;margin-right:5px}
+.lp h3{font-family:'Fraunces',serif;margin:0 0 2px;font-size:16px}
+.lp .pc{color:var(--muted);font-size:12px;margin:0 0 8px;letter-spacing:.04em}
+.lp table{font-size:12.5px;border-collapse:collapse}.lp td{padding:2px 0;vertical-align:top}.lp td:first-child{color:var(--muted);padding-right:14px}
+.lp .flag{margin-top:8px;font-size:11.5px;color:var(--accent)}
+.leaflet-popup-content{margin:13px 15px}
+#scatter h2{font-family:'Fraunces',serif;font-weight:600;font-size:17px;margin:0 0 2px}
+#scatter .axhint{font-size:12px;color:var(--muted);margin:0 0 12px}
+.eq{font-size:12.5px;line-height:1.6;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:11px 13px;margin-top:6px}
+.eq b{font-family:'Fraunces',serif}
+.sc-pt{cursor:pointer;transition:r .1s}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);font-size:11.5px;padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;z-index:9999;white-space:nowrap}
+#editbar{position:fixed;top:0;left:0;right:0;z-index:8000;background:#1c1a17;color:#f7f3ea;font-size:13px;padding:9px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.35);font-family:'IBM Plex Sans',sans-serif}
+#editbar b{color:#fff}
+#editbar #editmsg{color:#d8cfc0}
+#editbar button{margin-left:auto;background:#9a3b2e;color:#fff;border:none;border-radius:6px;padding:6px 13px;cursor:pointer;font-size:12px;font-weight:600}
+#editbar button:hover{background:#b34a3a}
+#infodot{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:12px;cursor:pointer;vertical-align:middle;margin-left:8px;padding:0;line-height:1;position:relative;top:-3px;transition:.15s}
+#infodot:hover{background:var(--accent);color:#fff}
+#infoModal{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;background:rgba(28,26,23,.42);backdrop-filter:blur(2px);padding:24px}
+#infoModal.open{display:flex}
+.info-card{background:var(--card);max-width:600px;width:100%;max-height:86vh;overflow-y:auto;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:34px 38px 28px;position:relative;border:1px solid var(--line)}
+.info-close{position:absolute;top:15px;right:17px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:18px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;transition:.15s}
+.info-close:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.info-kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 10px}
+.info-card h2{font-family:'Fraunces',serif;font-weight:600;font-size:25px;line-height:1.2;margin:0 0 14px;color:var(--ink);letter-spacing:-.01em}
+.info-lead{font-size:15px;line-height:1.55;color:var(--ink);font-weight:500;margin:0 0 18px}
+.info-body p{font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.72;color:#3a352e;margin:0 0 13px;text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+.info-body p b{color:var(--ink)}
+.info-note{font-size:11.5px;line-height:1.6;color:var(--muted);border-top:1px solid var(--line);padding-top:13px;margin-top:4px}
+.tip b{font-family:'Fraunces',serif;font-weight:600}
+.search-wrap{position:relative;margin:0 0 18px}
+#search{width:100%;font-family:inherit;font-size:12.5px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+#search::placeholder{color:#a99f90}
+#search:focus{outline:none;border-color:var(--accent)}
+.search-res{position:absolute;left:0;right:0;top:38px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;z-index:20;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.search-res:empty{display:none}
+.sres{padding:7px 11px;font-size:12.5px;cursor:pointer}
+.sres:hover{background:var(--paper)}
+.sres span{color:var(--muted);font-size:11px}
+#tlplay{position:fixed;left:302px;bottom:18px;z-index:600;font-family:inherit;font-size:12px;letter-spacing:.03em;padding:8px 13px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:.15s}
+#tlplay:hover{border-color:var(--ink);color:var(--ink)}
+#tlplay.playing{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ctrls{margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+.ctrl-h{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:10px}
+.cgrp{margin-bottom:10px}
+.cgl{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
+.warn{color:var(--accent)}
+.ck{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);cursor:pointer;padding:3px 0}
+.ck input{accent-color:var(--ink);width:15px;height:15px;margin:0}
+.cnote{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;min-height:1px}
+@media (max-width:820px){
+  #wrap{flex-direction:column;height:auto;min-height:100vh}
+  #panel{width:100%;flex:none;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+  #map{flex:none;width:100%;height:60vh;min-width:0}
+  #scatter{width:100%;flex:none;border-left:none;border-top:1px solid var(--line);transition:none}
+  #scatter.hidden{display:none;padding:0}
+  #tlplay{left:12px;bottom:12px}
+  #sctab{padding:12px 7px}
+}
+#printbtn{position:fixed;left:302px;bottom:58px;z-index:600;font-family:inherit;font-size:12px;letter-spacing:.03em;padding:8px 13px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:.15s}
+#printbtn:hover{border-color:var(--ink);color:var(--ink)}
+#scexport{position:absolute;top:18px;right:50px;border:1px solid var(--line);background:var(--paper);color:var(--muted);width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:13px;line-height:22px;text-align:center;padding:0}
+#scexport:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#printsrc{display:none}
+@media print{
+  @page{margin:12mm}
+  html,body{background:#fff !important}
+  #wrap{display:block;height:auto;width:auto}
+  #panel{width:auto;flex:none;height:auto;border-right:none;border-bottom:none;padding:0 0 6px;overflow:visible}
+  #map{flex:none;width:100%;height:115mm;min-width:0;border:1px solid #ccc;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #scatter{width:100%;flex:none;border:none;padding:10px 0 0;page-break-inside:avoid}
+  #scatter.hidden{display:none}
+  .toggle,.search-wrap,.opt,.note,.ctrls,#sccollapse,#scexport,#sctab,#tlplay,#printbtn,.leaflet-control-zoom{display:none !important}
+  .legbar,.legends,.tick65,.shapeleg{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printsrc{display:block !important;margin-top:10px;font-size:9px;color:#666;line-height:1.45}
+  .leaflet-control-attribution{font-size:7px}
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="panel">
+    <h1>Nieuwbouw van betaalbare koop in Nederland <button id="infodot" title="Over dit onderzoek" aria-label="Over dit onderzoek">i</button></h1>
+    <p class="sub">98 projecten · 16 gemeenten</p>
+    <div class="search-wrap"><input id="search" placeholder="Zoek een project…" autocomplete="off"><div id="searchRes" class="search-res"></div></div>
+    <p class="eyebrow">Kleur op <span id="stepno" class="stepno">1 / 4</span></p>
+    <div class="toggle tg5">
+      <button id="b-go" class="on" data-mode="go">Woning­oppervlak</button>
+      <button id="b-druk" data-mode="druk">Betaalbaarheidsfrictie</button>
+      <button id="b-grond" data-mode="grond">Grondbeleid</button>
+      <button id="b-vraag" data-mode="vraag">Marktvraag</button>
+    </div>
+    <p class="modehint" id="modehint"></p>
+    <div class="leg" id="legwrap">
+      <div class="legbar" id="legbar"></div>
+      <div class="tick65" id="tick65">65 m²</div>
+      <div class="legends"><span id="legmin"></span><span id="legmax"></span></div>
+    </div>
+    <div class="catleg" id="catleg"></div>
+    <label class="switch studio-sw"><input type="checkbox" id="fStudio"> Licht kleinste projecten uit (&lt; 50 m²)</label>
+    <div id="stats"></div>
+
+    <div class="opt">
+      <button class="optHead" id="optHead">Filters &amp; weergave <span id="optChev">▾</span></button>
+      <div class="optBody" id="optBody">
+        <label class="optlbl">Gemeente</label>
+        <select id="fGem"></select>
+        <label class="optlbl">Transactiejaar</label>
+        <div class="chips" id="fYears"></div>
+        <label class="optlbl">Grondbeleid</label>
+        <div class="chips" id="fGrond">
+          <button class="chip on" data-g="">Alle</button>
+          <button class="chip" data-g="1">Actief</button>
+          <button class="chip" data-g="0">Facilitair</button>
+        </div>
+        <label class="optlbl">Weergave</label>
+        <button class="reset" id="fReset">Filters wissen</button>
+      </div>
+    </div>
+
+    <p class="note">Puntgrootte ∝ woningoppervlak (GO). Klik een punt — op de kaart of in de grafiek — om het in beide weergaven te markeren.</p>
+  </div>
+  <div id="map"></div>
+  <div id="scatter">
+    <button id="sccollapse" title="Grafiek verbergen">›</button>
+    <button id="scexport" title="Grafiek opslaan als afbeelding">⤓</button>
+    <div class="rtabs">
+      <button id="tab-calc" class="on">Rekensom</button>
+      <button id="tab-sc">Regressie-lab</button>
+      <button id="tab-res">Resultaten</button>
+    </div>
+    <div id="pane-sc" style="display:none">
+    <h2>Regressie-lab</h2>
+    <p class="axhint">Interactieve OLS-regressie: selecteer voorspellers uit de dataset en observeer de coëfficiënten, standaardfouten en significantie.</p>
+    <svg id="scsvg" viewBox="0 0 430 300" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="lab">
+      <div class="lab-row">
+        <span class="lab-lbl">Afhankelijke variabele (Y)</span>
+        <div class="ytog">
+          <button id="y-avg" class="on" data-y="go">Gemiddelde GO</button>
+          <button id="y-up" data-y="goU">Bovenrange GO</button>
+        </div>
+      </div>
+      <div class="lab-row">
+        <span class="lab-lbl">Voorspellers (X) — klik om toe te voegen</span>
+        <div class="varchips" id="varchips"></div>
+      </div>
+      <label class="modtog"><input type="checkbox" id="modChk"> Moderatie: <b>grondbeleid × betaalbaarheidsfrictie</b> (toont twee slopes)</label>
+      <div class="labtable" id="labtable"></div>
+      <div class="labfit" id="labfit"></div>
+    </div>
+    </div>
+    <div id="pane-res" style="display:none">
+      <div class="resblock">
+        <h2>1 · Ruimtelijke clustering — Moran's I</h2>
+        <p class="axhint">Blijft er clustering over in de residuen, of verklaart de betaalbaarheidsfrictie de ruimtelijke structuur?</p>
+        <svg id="moransvg" viewBox="0 0 430 220" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+        <p class="rescap" id="morancap"></p>
+      </div>
+      <div class="resblock">
+        <h2>2 · Dempt actief grondbeleid de woningkrimp? — interactie</h2>
+        <p class="axhint">Twee regressielijnen. Lopen ze parallel, dan dempt grondbeleid de krimp niet.</p>
+        <svg id="modsvg" viewBox="0 0 430 300" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+        <p class="rescap" id="modcap"></p>
+      </div>
+      <div class="resblock">
+        <h2>3 · Kans op een kleine woning (&lt; 50 m²)</h2>
+        <p class="axhint">Logistische regressie: hoe verandert de kans met betaalbaarheidsfrictie en grondbeleid?</p>
+        <svg id="logsvg" viewBox="0 0 430 300" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+        <p class="rescap" id="logcap"></p>
+      </div>
+    </div>
+    <div id="pane-calc" style="display:none">
+      <h2>Betaalbaarheidsfrictie &amp; grondwaarde</h2>
+      <p class="axhint">Onder een bindend prijsplafond kan de opbrengst per woning niet meestijgen met de markt; de aanpassing verschuift naar de maatvoering. Bij oplopende grondprijzen staat de residuele grondwaarde onder druk, tenzij het oppervlak wordt teruggebracht — reken het door met de parameters.</p>
+
+      <h3 class="calc-h3">Residuele grondwaarde per woning</h3>
+      <svg id="wfsvg" viewBox="0 0 440 320" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+      <p class="calc-out" id="wfout"></p>
+
+      <div class="calc-grid">
+        <div class="calc-cell"><div class="cv"><label>Plafond (aftopping)</label><output id="c-nhg-o">€ 420.000</output></div><input type="range" id="c-nhg" min="300000" max="500000" step="5000" value="420000"></div>
+        <div class="calc-cell"><div class="cv"><label>Marktwaarde /m² GO</label><output id="c-loc-o">€ 7.800</output></div><input type="range" id="c-loc" min="3000" max="11000" step="50" value="7800"></div>
+        <div class="calc-cell"><div class="cv"><label>Aanneemsom /m² BVO</label><output id="c-aan-o">€ 2.400</output></div><input type="range" id="c-aan" min="1500" max="3500" step="50" value="2400"></div>
+        <div class="calc-cell"><div class="cv"><label>Bijkomend /m² BVO</label><output id="c-bij-o">€ 1.600</output></div><input type="range" id="c-bij" min="500" max="3000" step="50" value="1600"></div>
+        <div class="calc-cell"><div class="cv"><label>Vormfactor</label><output id="c-vf-o">0,70</output></div><input type="range" id="c-vf" min="0.60" max="0.95" step="0.01" value="0.70"></div>
+        <div class="calc-cell"><div class="cv"><label>BVO (m²)</label><output id="c-bvo-o">91 m²</output></div><input type="range" id="c-bvo" min="50" max="150" step="1" value="91"></div>
+      </div>
+      <p class="calc-derived">Stichtingskosten: <b id="c-sk-o">€ 4.000 /m²</b> BVO&nbsp;·&nbsp;GO volledig: <b id="c-go-o">63,7 m²</b>&nbsp;·&nbsp;referentie MGI: <b>65 m²</b></p>
+
+      <h3 class="calc-h3">De frictie in maatvoering</h3>
+      <svg id="calcsvg" viewBox="0 0 430 250" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+      <p class="calc-out" id="calcout"></p>
+    </div>
+  </div>
+</div>
+<button id="tlplay">▶ Tijdlijn</button>
+<button id="printbtn">⎙ Print / PDF</button>
+<div id="printsrc"></div>
+<button id="sctab">Grafiek ‹</button>
+<div class="tip" id="tip"></div>
+<div id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+  <div class="info-card">
+    <button class="info-close" id="infoClose" aria-label="Sluiten">×</button>
+    <p class="info-kicker">Onderzoek · betaalbare nieuwbouw</p>
+    <h2 id="infoTitle">Beleid voor betaalbare koop draagt bij aan krimp van nieuwbouwwoningen — publiek grondbezit maakt het verschil niet</h2>
+    <div class="info-body">
+      <p>Nieuwbouwappartementen in de koop- en huursector worden al jaren kleiner, en het aandeel eengezinswoningen neemt sterk af in de grote steden. Een deel van die krimp is terug te voeren op het beleid dat 'betaalbaarheid' definieert: de prijsaftopping. Op locaties waar de marktwaarde per vierkante meter ver boven die grens uitstijgt, wordt de betaalbare koopwoning kleiner opgeleverd — een verklaring die niet enkel aan locatiewaarde kan worden toegeschreven. Het onderzoek vindt een robuust verband: naarmate de spanning met de prijsaftopping toeneemt, daalt het woonoppervlak met enkele vierkante meters.</p>
+      <p>Waar kleine woningen deels vanuit de vraagzijde zijn verklaard — een veranderende behoefte en levensstijl van jonge kopers en een voorkeur voor stedelijk leven — nuanceert de econometrische realiteit deze lezing. Zodra de frictie met de betaalbaarheidsaftopping wordt meegewogen, verliest de marktvraag grotendeels haar verklaringskracht voor het verrijzen van kleinere woningen. Deze lezing wijst eerder op beperkte keuze dan op voorkeur: er wordt klein gebouwd waar de lokale prijsverhoudingen daartoe dwingen, niet primair waar de vraag naar klein wonen het grootst is.</p>
+      <p>Actief grondbeleid, waarbij de gemeente zelf grond bezit en uitgeeft, geeft gemeenten grip om op betaalbaarheid en kwaliteit te sturen. Toch laat het onderzoek zien dat publiek grondbezit en grondontwikkeling de geobserveerde krimp niet remmen. Onder de residuele rekenmethode, waarbij de grondwaarde overblijft nadat de stichtingskosten van de opbrengsten zijn verevend, is het verkleinen van betaalbare woningen onder een bindend prijsplafond een manier waarop gemeenten grondwaarden overeind kunnen houden. Het financiële belang van de gemeente-als-grondontwikkelaar loopt daardoor mét de verkleining mee.</p>
+      <p>Er is wel een tegenbeweging zichtbaar, die wijst op sturing op de allerkleinste koopproducten. Waar actief grondbeleid de algemene krimp in het betaalbare segment niet dempt, lijkt het de uiterste ondergrens wél enigszins te bewaken: de kans dat er microwoningen en studio's verrijzen op gronden waar actief beleid is gevoerd, is systematisch kleiner.</p>
+      <p>De beschreven spanning laat zich lezen als een waarschuwing voor de keerzijde die de fixatie op betaalbaarheid met zich meebrengt. De Wet versterking regie volkshuisvesting vraagt sinds 1 juli 2026 dat twee derde van de nieuwbouw betaalbaar is. Gemeenten met een sociale huurvoorraad boven het landelijk gemiddelde dienen hun nieuwbouwopgave bovendien voor meer dan 40% met betaalbare koop- en middenhuurwoningen in te vullen. Concreet betekent het dat gemeenten, Rijk en provincies invulling geven aan volkshuisvestingsprogramma's waarin richting wordt gegeven aan waar, hoeveel en voor wie er gebouwd wordt om deze doelen te behalen. Met name de 'voor wie'-vraag zou vereisen dat betaalbare woningen breder worden beschouwd dan alleen de koopprijs.</p>
+      <p>Waar betaalbare woningen worden gepland, bepaalt zo mede wát er wordt gebouwd. Wat nu op projectniveau als compressie plaatsvindt, zal onvermijdelijk de compositie van toekomstige stedelijke woningmarkten vormgeven. De opgave om betaalbare woningen te bouwen en het bouwen in bestaand stedelijk gebied — dat nog steeds een aanzienlijk deel van de randstedelijke woningbouwproductie draagt — bijten elkaar. Dat roept de vraag op hoe en waar overheden betaalbare woningen kunnen realiseren zonder dat dit ten koste gaat van de compositie van dit segment, en uiteindelijk van de stad. Waar de gemiddelde betaalbare koopwoning in Utrecht in dit onderzoek 57,2 m² bedraagt en in Amsterdam zelfs terugvalt naar 50,5 m², is het lokale overheden eraan gelegen om zich af te vragen of dit aanbod nog aansluit bij het creëren van langdurig vitale en diverse buurten waarin huishoudens zich ook voor langere tijd kunnen én willen vestigen.</p>
+    </div>
+  </div>
+</div>
+<script>
+const DATA = [{"naam": "Nieuwe Defensie", "gem": "Utrecht", "pc": "3527KW", "lat": 52.079638, "lon": 5.104609, "go": 55.2564, "goU": 55.2564, "bb1": 53, "druk2": 1.1411, "nhg": 450000, "pm2": 7650.94, "grond": 1, "mgw": 100.0, "mvk": 11, "jaar": 2025, "afst": 1.3881, "method": "Adres-geocodering (Laan van Verzetsstrijders)", "exact": true, "resid": 2.623, "dem55": 11.0, "mgi1": 1.0725, "dens": 5729.0, "cost": 208545, "locv": 7900.0}, {"naam": "New Roots", "gem": "Utrecht", "pc": "3541EN", "lat": 52.095645, "lon": 5.073066, "go": 53.0606, "goU": 69.03, "bb1": 28, "druk2": 0.9463, "nhg": 405000, "pm2": 5818.75, "grond": 1, "mgw": 100.0, "mvk": 9, "jaar": 2023, "afst": 2.7741, "method": "PC6 exact", "exact": true, "resid": -10.994, "dem55": 9.0, "mgi1": 0.9476, "dens": 7508.0, "cost": 208545, "locv": 5896.0}, {"naam": "Ludens Joy", "gem": "Utrecht", "pc": "3526KM", "lat": 52.074761, "lon": 5.108128, "go": 55.2308, "goU": 55.2308, "bb1": 54, "druk2": 1.0926, "nhg": 470000, "pm2": 7954.0, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2026, "afst": 2.0159, "method": "PC6 exact", "exact": true, "resid": -0.247, "dem55": 6.0, "mgi1": 1.0259, "dens": 3988.0, "cost": 208545, "locv": 7900.0}, {"naam": "Bloom Park", "gem": "Utrecht", "pc": "3526KM", "lat": 52.071833, "lon": 5.108814, "go": 56.355, "goU": 57.8777, "bb1": 48, "druk2": 1.0926, "nhg": 470000, "pm2": 7529.0, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2026, "afst": 2.0159, "method": "PC6 exact", "exact": true, "resid": 0.878, "dem55": 6.0, "mgi1": 1.0259, "dens": 3988.0, "cost": 208545, "locv": 7900.0}, {"naam": "CIX", "gem": "Utrecht", "pc": "3526KM", "lat": 52.068933, "lon": 5.109415, "go": 51.9767, "goU": 60.37, "bb1": 47, "druk2": 1.0926, "nhg": 470000, "pm2": 7294.59, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2026, "afst": 2.0159, "method": "PC6 exact", "exact": true, "resid": -3.501, "dem55": 6.0, "mgi1": 1.0259, "dens": 3988.0, "cost": 208545, "locv": 7900.0}, {"naam": "De Groene Steegjes", "gem": "Utrecht", "pc": "3541HK", "lat": 52.085968, "lon": 5.07755, "go": 76.383, "goU": 76.383, "bb1": 68, "druk2": 0.9664, "nhg": 355000, "pm2": 4298.55, "grond": 1, "mgw": 80.8511, "mvk": 7, "jaar": 2022, "afst": 2.4034, "method": "PC6 exact", "exact": true, "resid": 13.507, "dem55": 7.0, "mgi1": 0.9664, "dens": 5081.0, "cost": 208545, "locv": 5177.0}, {"naam": "Bellevue", "gem": "Utrecht", "pc": "3541BE", "lat": 52.097437, "lon": 5.074911, "go": 45.2727, "goU": 58.0, "bb1": 29, "druk2": 1.017, "nhg": 450000, "pm2": 6346.28, "grond": 1, "mgw": 100.0, "mvk": 9, "jaar": 2025, "afst": 2.6183, "method": "PC6 exact", "exact": true, "resid": -14.637, "dem55": 9.0, "mgi1": 1.023, "dens": 7508.0, "cost": 208545, "locv": 7041.0}, {"naam": "De Omloop", "gem": "Utrecht", "pc": "3541HK", "lat": 52.08815, "lon": 5.077218, "go": 80.1539, "goU": 80.15, "bb1": 69, "druk2": 0.9361, "nhg": 355000, "pm2": 4119.89, "grond": 1, "mgw": 30.7692, "mvk": 8, "jaar": 2022, "afst": 2.4034, "method": "PC6 exact", "exact": true, "resid": 15.501, "dem55": 8.0, "mgi1": 1.0726, "dens": 7607.0, "cost": 208566, "locv": 5529.0}, {"naam": "Wisselspoor deelgebied 4", "gem": "Utrecht", "pc": "3551JA", "lat": 52.09748, "lon": 5.10188, "go": 48.2043, "goU": 49.9667, "bb1": 44, "druk2": 1.0642, "nhg": 450000, "pm2": 7304.71, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 1.082, "method": "PC6 exact", "exact": true, "resid": -8.938, "dem55": 10.0, "mgi1": 1.0508, "dens": 10663.0, "cost": 208545, "locv": 7367.0}, {"naam": "Smakkelaarspark", "gem": "Utrecht", "pc": "3511EA", "lat": 52.092514, "lon": 5.109673, "go": 50.037, "goU": 52.92, "bb1": 43, "druk2": 1.1177, "nhg": 435000, "pm2": 7337.44, "grond": 1, "mgw": 100.0, "mvk": 12, "jaar": 2024, "afst": 0.2596, "method": "PC6 exact", "exact": true, "resid": -3.969, "dem55": 12.0, "mgi1": 1.128, "dens": 2284.0, "cost": 208545, "locv": 7480.0}, {"naam": "Pablo Picasso Circulus", "gem": "Utrecht", "pc": "3544NW", "lat": 52.099936, "lon": 5.035622, "go": 67.8837, "goU": 67.88, "bb1": 54, "druk2": 0.9299, "nhg": 450000, "pm2": 6184.0, "grond": 1, "mgw": 100.0, "mvk": 5, "jaar": 2025, "afst": 5.3665, "method": "PC6 exact", "exact": true, "resid": 2.867, "dem55": 5.0, "mgi1": 0.8594, "dens": 7899.0, "cost": 208545, "locv": 6438.0}, {"naam": "Cartesius Driehoek", "gem": "Utrecht", "pc": "3534BJ", "lat": 52.10118, "lon": 5.090811, "go": 58.4167, "goU": 58.4167, "bb1": 58, "druk2": 1.0598, "nhg": 450000, "pm2": 7746.93, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2025, "afst": 1.9654, "method": "PC6 exact", "exact": true, "resid": 1.016, "dem55": 12.0, "mgi1": 1.0439, "dens": 1711.0, "cost": 208545, "locv": 7337.0}, {"naam": "Jutfasehof", "gem": "Utrecht", "pc": "3522EJ", "lat": 52.067686, "lon": 5.115327, "go": 47.22, "goU": 56.0, "bb1": 38, "druk2": 0.9732, "nhg": 405000, "pm2": 6284.42, "grond": 0, "mgw": 91.9655, "mvk": 11, "jaar": 2023, "afst": 2.067, "method": "PC6 exact", "exact": true, "resid": -7.437, "dem55": 11.0, "mgi1": 1.3141, "dens": 12837.0, "cost": 208545, "locv": 6064.0}, {"naam": "Stadgeluk", "gem": "Utrecht", "pc": "3513GX", "lat": 52.101678, "lon": 5.110931, "go": 59.375, "goU": 59.375, "bb1": 58, "druk2": 1.0671, "nhg": 450000, "pm2": 7330.0, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2025, "afst": 1.2724, "method": "PC6 exact", "exact": true, "resid": 2.403, "dem55": 12.0, "mgi1": 1.1473, "dens": 15473.0, "cost": 208545, "locv": 7388.0}, {"naam": "Knik", "gem": "Houten", "pc": "3995GA", "lat": 52.036116, "lon": 5.166101, "go": 39.24, "goU": 50.96, "bb1": 30, "druk2": 1.0833, "nhg": 450000, "pm2": 8197.32, "grond": 0, "mgw": 100.0, "mvk": 7, "jaar": 2025, "afst": 0.2424, "method": "PC6 exact", "exact": true, "resid": -16.783, "dem55": 7.0, "mgi1": 0.9104, "dens": 6044.0, "cost": 200552, "locv": 7500.0}, {"naam": "Nomi", "gem": "Utrecht", "pc": "3526KN", "lat": 52.074156, "lon": 5.104934, "go": 53.8096, "goU": 60.0, "bb1": 34, "druk2": 1.1411, "nhg": 450000, "pm2": 7482.68, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2025, "afst": 1.8663, "method": "PC6 exact", "exact": true, "resid": 1.176, "dem55": 6.0, "mgi1": 1.0375, "dens": 3988.0, "cost": 208545, "locv": 7900.0}, {"naam": "De Cascade", "gem": "Utrecht", "pc": "3544MA", "lat": 52.099273, "lon": 5.042038, "go": 63.4, "goU": 63.41, "bb1": 60, "druk2": 1.009, "nhg": 310000, "pm2": 4604.0, "grond": 1, "mgw": 100.0, "mvk": 5, "jaar": 2020, "afst": 4.9264, "method": "PC6 exact", "exact": true, "resid": 3.021, "dem55": 5.0, "mgi1": 0.9519, "dens": 7899.0, "cost": 208545, "locv": 4812.0}, {"naam": "BU31", "gem": "Utrecht", "pc": "3572KK", "lat": 52.102559, "lon": 5.133002, "go": 49.78, "goU": 51.5, "bb1": 47, "druk2": 1.1987, "nhg": 310000, "pm2": 5412.89, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2020, "afst": 1.9607, "method": "PC6 exact", "exact": true, "resid": 0.523, "dem55": 12.0, "mgi1": 1.2587, "dens": 12733.0, "cost": 208545, "locv": 5717.0}, {"naam": "Urban62", "gem": "Groningen", "pc": "9714JT", "lat": 53.235122, "lon": 6.578944, "go": 71.45, "goU": 74.5, "bb1": 57, "druk2": 0.7669, "nhg": 450000, "pm2": 5286.0, "grond": 0, "mgw": 100.0, "mvk": 3, "jaar": 2025, "afst": 1.9169, "method": "PC6 exact", "exact": true, "resid": -3.123, "dem55": 3.0, "mgi1": 0.8125, "dens": 12296.0, "cost": 190488, "locv": 5309.0}, {"naam": "Linck in de Binck", "gem": "Den Haag", "pc": "2516CC", "lat": 52.065219, "lon": 4.337265, "go": 63.2326, "goU": 71.9524, "bb1": 51, "druk2": 0.9228, "nhg": 450000, "pm2": 6021.0, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 2.2741, "method": "PC6 exact", "exact": true, "resid": -2.2, "dem55": 10.0, "mgi1": 0.816, "dens": 7838.0, "cost": 200996, "locv": 6389.0}, {"naam": "One Milky Way", "gem": "Den Haag", "pc": "2516AH", "lat": 52.066293, "lon": 4.346758, "go": 76.2609, "goU": 76.2609, "bb1": 76, "druk2": 0.9079, "nhg": 435000, "pm2": 5844.0, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2024, "afst": 2.8135, "method": "PC6 exact", "exact": true, "resid": 9.955, "dem55": 10.0, "mgi1": 0.7658, "dens": 7838.0, "cost": 200996, "locv": 6076.0}, {"naam": "Corner Lofts", "gem": "Den Haag", "pc": "2515BT", "lat": 52.069815, "lon": 4.320302, "go": 30.26, "goU": 56.0, "bb1": 23, "druk2": 1.0163, "nhg": 470000, "pm2": 7956.21, "grond": 0, "mgw": 100.0, "mvk": 15, "jaar": 2026, "afst": 1.0199, "method": "PC6 exact", "exact": true, "resid": -29.691, "dem55": 15.0, "mgi1": 0.9262, "dens": 9677.0, "cost": 200996, "locv": 7349.0}, {"naam": "Beaufort", "gem": "Den Haag", "pc": "2583CN", "lat": 52.096281, "lon": 4.26811, "go": 48.0, "goU": 48.0, "bb1": 48, "druk2": 1.1323, "nhg": 355000, "pm2": 6715.62, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2022, "afst": 3.6062, "method": "PC6 exact", "exact": true, "resid": -5.15, "dem55": 12.0, "mgi1": 1.2174, "dens": 5556.0, "cost": 200552, "locv": 6184.0}, {"naam": "Zeesluisweg (Dockside)", "gem": "Den Haag", "pc": "2583DS", "lat": 52.101094, "lon": 4.272222, "go": 51.125, "goU": 63.28, "bb1": 28, "druk2": 1.0232, "nhg": 435000, "pm2": 6982.92, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2024, "afst": 3.7863, "method": "PC6 exact", "exact": true, "resid": -8.421, "dem55": 12.0, "mgi1": 1.0276, "dens": 5556.0, "cost": 200552, "locv": 6848.0}, {"naam": "Central Parc", "gem": "Nieuwegein", "pc": "3439NG", "lat": 52.031961, "lon": 5.10075, "go": 72.0, "goU": 73.1667, "bb1": 51, "druk2": 0.9286, "nhg": 450000, "pm2": 5668.0, "grond": 0, "mgw": 100.0, "mvk": 2, "jaar": 2025, "afst": 1.3039, "method": "PC6 exact", "exact": true, "resid": 6.908, "dem55": 2.0, "mgi1": 0.8642, "dens": 2341.0, "cost": 200552, "locv": 6429.0}, {"naam": "Perkinshof", "gem": "Nieuwegein", "pc": "3439ND", "lat": 52.033547, "lon": 5.102056, "go": 68.7368, "goU": 72.538, "bb1": 53, "druk2": 0.8556, "nhg": 470000, "pm2": 5809.71, "grond": 0, "mgw": 100.0, "mvk": 2, "jaar": 2026, "afst": 1.4411, "method": "PC6 exact", "exact": true, "resid": -0.636, "dem55": 2.0, "mgi1": 0.85, "dens": 2341.0, "cost": 200552, "locv": 6186.0}, {"naam": "Havenkwartier", "gem": "Nieuwegein", "pc": "3439MV", "lat": 52.030608, "lon": 5.097951, "go": 70.75, "goU": 76.25, "bb1": 63, "druk2": 0.858, "nhg": 405000, "pm2": 5065.68, "grond": 0, "mgw": 100.0, "mvk": 2, "jaar": 2023, "afst": 1.0862, "method": "PC6 exact", "exact": true, "resid": 1.518, "dem55": 2.0, "mgi1": 0.7891, "dens": 2341.0, "cost": 200552, "locv": 5346.0}, {"naam": "21 one", "gem": "Den Haag", "pc": "2591BR", "lat": 52.092039, "lon": 4.3625, "go": 59.6842, "goU": 68.5556, "bb1": 46, "druk2": 0.8547, "nhg": 450000, "pm2": 5913.0, "grond": 0, "mgw": 100.0, "mvk": 11, "jaar": 2026, "afst": 4.1529, "method": "PC6 exact", "exact": true, "resid": -9.741, "dem55": 11.0, "mgi1": 0.8748, "dens": 7144.0, "cost": 200996, "locv": 5917.0}, {"naam": "Meastro", "gem": "Den Haag", "pc": "2544RN", "lat": 52.039955, "lon": 4.249558, "go": 79.8315, "goU": 80.0256, "bb1": 76, "druk2": 0.8014, "nhg": 450000, "pm2": 5225.0, "grond": 0, "mgw": 100.0, "mvk": 7, "jaar": 2025, "afst": 5.6097, "method": "PC6 exact", "exact": true, "resid": 7.282, "dem55": 7.0, "mgi1": 0.7749, "dens": 10608.0, "cost": 200996, "locv": 5548.0}, {"naam": "Klein overveen", "gem": "Bloemendaal", "pc": "2051EE", "lat": 52.391454, "lon": 4.604065, "go": 41.2, "goU": 41.2, "bb1": 37, "druk2": 1.1901, "nhg": 450000, "pm2": 8206.33, "grond": 0, "mgw": 100.0, "mvk": 17, "jaar": 2025, "afst": 2.4106, "method": "PC6 exact", "exact": true, "resid": -8.561, "dem55": 17.0, "mgi1": 1.1199, "dens": 825.0, "cost": 198480, "locv": 8239.0}, {"naam": "Vederhof vogelwijk", "gem": "Zeist", "pc": "3704EL", "lat": 52.088606, "lon": 5.213335, "go": 74.56, "goU": 99.0, "bb1": 50, "druk2": 0.8134, "nhg": 405000, "pm2": 4786.36, "grond": 0, "mgw": 52.0, "mvk": 6, "jaar": 2023, "afst": 1.412, "method": "PC6 exact", "exact": true, "resid": 2.714, "dem55": 6.0, "mgi1": 0.8365, "dens": 4070.0, "cost": 203807, "locv": 5500.0}, {"naam": "Olympiade", "gem": "Amstelveen", "pc": "1187XR", "lat": 52.287064, "lon": 4.846344, "go": 61.4615, "goU": 61.416, "bb1": 55, "druk2": 1.0446, "nhg": 325000, "pm2": 5327.99, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2021, "afst": 2.1257, "method": "PC6 exact", "exact": true, "resid": 3.17, "dem55": 10.0, "mgi1": 1.0743, "dens": 3524.0, "cost": 215248, "locv": 5223.0}, {"naam": "Nieuw-Oden", "gem": "Rotterdam", "pc": "3191EM", "lat": 51.865615, "lon": 4.353173, "go": 55.6569, "goU": 78.1333, "bb1": 32, "druk2": 0.6701, "nhg": 470000, "pm2": 5282.99, "grond": 0, "mgw": 100.0, "mvk": 3, "jaar": 2026, "afst": 10.0177, "method": "PC6 exact", "exact": true, "resid": -24.591, "dem55": 3.0, "mgi1": 0.7362, "dens": 4920.0, "cost": 196482, "locv": 4845.0}, {"naam": "Rootz", "gem": "Haarlem", "pc": "2035VA", "lat": 52.362958, "lon": 4.652356, "go": 49.8573, "goU": 54.4, "bb1": 39, "druk2": 1.0612, "nhg": 450000, "pm2": 6711.11, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2025, "afst": 2.324, "method": "PC6 exact", "exact": true, "resid": -7.461, "dem55": 5.0, "mgi1": 0.8876, "dens": 4270.0, "cost": 198480, "locv": 7347.0}, {"naam": "High Five", "gem": "Haarlem", "pc": "2037AR", "lat": 52.356904, "lon": 4.655652, "go": 61.1384, "goU": 73.0, "bb1": 52, "druk2": 1.0978, "nhg": 435000, "pm2": 6022.34, "grond": 0, "mgw": 100.0, "mvk": 3, "jaar": 2024, "afst": 3.0897, "method": "PC6 exact", "exact": true, "resid": 5.966, "dem55": 3.0, "mgi1": 0.7772, "dens": 2682.0, "cost": 198480, "locv": 7347.0}, {"naam": "23stories", "gem": "Haarlem", "pc": "2037AL", "lat": 52.358095, "lon": 4.656373, "go": 61.448, "goU": 61.958, "bb1": 52, "druk2": 1.0612, "nhg": 450000, "pm2": 6193.66, "grond": 0, "mgw": 100.0, "mvk": 3, "jaar": 2025, "afst": 2.9995, "method": "PC6 exact", "exact": true, "resid": 4.13, "dem55": 3.0, "mgi1": 0.8839, "dens": 4270.0, "cost": 198480, "locv": 7347.0}, {"naam": "Fietsznfabriek", "gem": "Haarlem", "pc": "2011AK", "lat": 52.380973, "lon": 4.64614, "go": 51.629, "goU": 56.2667, "bb1": 43, "druk2": 1.2037, "nhg": 450000, "pm2": 7870.81, "grond": 1, "mgw": 100.0, "mvk": 6, "jaar": 2025, "afst": 0.851, "method": "PC6 exact", "exact": true, "resid": 2.665, "dem55": 6.0, "mgi1": 1.072, "dens": 13252.0, "cost": 198480, "locv": 8333.0}, {"naam": "Plaza & Bavo residences", "gem": "Haarlem", "pc": "2014SC", "lat": 52.377972, "lon": 4.617379, "go": 40.3636, "goU": 40.3636, "bb1": 38, "druk2": 1.0592, "nhg": 450000, "pm2": 8552.63, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2024, "afst": 1.159, "method": "PC6 exact", "exact": true, "resid": -17.072, "dem55": 6.0, "mgi1": 1.0368, "dens": 7360.0, "cost": 198480, "locv": 7333.0}, {"naam": "Schoterkwartier", "gem": "Haarlem", "pc": "2022ZP", "lat": 52.395834, "lon": 4.650124, "go": 59.625, "goU": 59.625, "bb1": 58, "druk2": 1.0883, "nhg": 435000, "pm2": 6437.53, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2024, "afst": 1.9571, "method": "PC6 exact", "exact": true, "resid": 3.896, "dem55": 6.0, "mgi1": 1.0311, "dens": 13204.0, "cost": 198480, "locv": 7283.0}, {"naam": "Spaarnse terassen", "gem": "Haarlem", "pc": "2021CB", "lat": 52.388935, "lon": 4.64874, "go": 49.0, "goU": 49.0, "bb1": 45, "druk2": 1.0975, "nhg": 450000, "pm2": 8455.0, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2025, "afst": 1.2141, "method": "PC5-benadering (n=18)", "exact": true, "resid": -6.19, "dem55": 6.0, "mgi1": 1.0464, "dens": 8678.0, "cost": 198480, "locv": 7598.0}, {"naam": "Eendracht Residence", "gem": "Rotterdam", "pc": "3012AA", "lat": 51.914458, "lon": 4.475754, "go": 55.8, "goU": 55.8, "bb1": 51, "druk2": 1.0901, "nhg": 450000, "pm2": 7749.2, "grond": 0, "mgw": 100.0, "mvk": 16, "jaar": 2025, "afst": 0.8439, "method": "PC6 exact", "exact": true, "resid": 0.176, "dem55": 16.0, "mgi1": 1.0288, "dens": 11488.0, "cost": 210543, "locv": 7547.0}, {"naam": "Het Hoofdkwartier", "gem": "Rotterdam", "pc": "3067GJ", "lat": 51.948531, "lon": 4.551258, "go": 49.09, "goU": 49.09, "bb1": 49, "druk2": 0.9129, "nhg": 450000, "pm2": 6387.38, "grond": 0, "mgw": 100.0, "mvk": 11, "jaar": 2026, "afst": 5.8741, "method": "PC6 exact", "exact": true, "resid": -16.923, "dem55": 11.0, "mgi1": 0.8654, "dens": 5337.0, "cost": 200552, "locv": 6320.0}, {"naam": "The MIX A+B", "gem": "Rotterdam", "pc": "3067NW", "lat": 51.940461, "lon": 4.544703, "go": 62.6574, "goU": 74.6207, "bb1": 52, "druk2": 0.9129, "nhg": 450000, "pm2": 6260.63, "grond": 0, "mgw": 100.0, "mvk": 11, "jaar": 2026, "afst": 5.5525, "method": "PC6 exact", "exact": true, "resid": -3.355, "dem55": 11.0, "mgi1": 0.8631, "dens": 5337.0, "cost": 200552, "locv": 6320.0}, {"naam": "Slinge 303", "gem": "Rotterdam", "pc": "3085ER", "lat": 51.873683, "lon": 4.489495, "go": 67.0377, "goU": 89.6, "bb1": 60, "druk2": 0.6298, "nhg": 435000, "pm2": 4645.49, "grond": 1, "mgw": 100.0, "mvk": 8, "jaar": 2024, "afst": 4.8714, "method": "PC6 exact", "exact": true, "resid": -15.573, "dem55": 8.0, "mgi1": 0.7196, "dens": 9025.0, "cost": 198480, "locv": 4215.0}, {"naam": "HoBo", "gem": "Rotterdam", "pc": "3037BK", "lat": 51.932709, "lon": 4.469317, "go": 59.0556, "goU": 64.5, "bb1": 52, "druk2": 0.9959, "nhg": 450000, "pm2": 6452.89, "grond": 1, "mgw": 100.0, "mvk": 14, "jaar": 2025, "afst": 1.8386, "method": "PC6 exact", "exact": true, "resid": -2.091, "dem55": 14.0, "mgi1": 0.9593, "dens": 18645.0, "cost": 194484, "locv": 6894.0}, {"naam": "Timber", "gem": "Rotterdam", "pc": "3083AA", "lat": 51.886565, "lon": 4.497904, "go": 66.57, "goU": 79.4, "bb1": 55, "druk2": 0.6813, "nhg": 450000, "pm2": 5390.0, "grond": 0, "mgw": 100.0, "mvk": 11, "jaar": 2025, "afst": 3.6487, "method": "PC5-benadering (n=18)", "exact": true, "resid": -13.021, "dem55": 11.0, "mgi1": 0.7805, "dens": 7570.0, "cost": 192486, "locv": 4717.0}, {"naam": "De scharnier", "gem": "Rotterdam", "pc": "3072WX", "lat": 51.897765, "lon": 4.476424, "go": 60.4594, "goU": 61.057, "bb1": 50, "druk2": 1.023, "nhg": 435000, "pm2": 6655.0, "grond": 1, "mgw": 100.0, "mvk": 14, "jaar": 2024, "afst": 2.0609, "method": "Adres-geocodering (Maashavenkade)", "exact": true, "resid": 0.902, "dem55": 14.0, "mgi1": 0.9708, "dens": 12749.0, "cost": 196695, "locv": 6846.0}, {"naam": "Vlietpark II", "gem": "Rotterdam", "pc": "3191XB", "lat": 51.860461, "lon": 4.356637, "go": 114.0, "goU": 114.0, "bb1": 114, "druk2": 0.5937, "nhg": 435000, "pm2": 3421.05, "grond": 1, "mgw": 0.0, "mvk": 3, "jaar": 2024, "afst": 10.226, "method": "PC6 exact", "exact": true, "resid": 29.273, "dem55": 3.0, "mgi1": 0.6794, "dens": 4920.0, "cost": 196462, "locv": 3973.0}, {"naam": "Park Overdeschie", "gem": "Rotterdam", "pc": "3043AA", "lat": 51.937822, "lon": 4.427266, "go": 75.0, "goU": 75.0, "bb1": 75, "druk2": 0.85, "nhg": 470000, "pm2": 5193.33, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2026, "afst": 3.9788, "method": "PC6 exact", "exact": true, "resid": 5.299, "dem55": 5.0, "mgi1": 0.8736, "dens": 4529.0, "cost": 192466, "locv": 6146.0}, {"naam": "Ostadehof", "gem": "Rotterdam", "pc": "3181HS", "lat": 51.90073, "lon": 4.245443, "go": 127.4406, "goU": 127.861, "bb1": 121, "druk2": 0.4617, "nhg": 435000, "pm2": 3191.43, "grond": 1, "mgw": 0.0, "mvk": 2, "jaar": 2024, "afst": 15.8391, "method": "PC6 exact", "exact": true, "resid": 34.974, "dem55": 2.0, "mgi1": 0.7405, "dens": 3888.0, "cost": 203786, "locv": 3090.0}, {"naam": "Atlas fase 1", "gem": "Rotterdam", "pc": "3074SN", "lat": 51.899807, "lon": 4.511685, "go": 60.0, "goU": 60.0, "bb1": 53, "druk2": 0.9548, "nhg": 450000, "pm2": 6701.0, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 3.4557, "method": "PC5-benadering (n=14)", "exact": true, "resid": -3.556, "dem55": 10.0, "mgi1": 0.8092, "dens": 13719.0, "cost": 196675, "locv": 6610.0}, {"naam": "New Maas", "gem": "Rotterdam", "pc": "3077BR", "lat": 51.902694, "lon": 4.548275, "go": 64.1394, "goU": 64.1395, "bb1": 62, "druk2": 0.946, "nhg": 450000, "pm2": 7026.0, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2025, "afst": 5.3566, "method": "Adres-geocodering (IJsselmondsehoofd)", "exact": true, "resid": 0.067, "dem55": 6.0, "mgi1": 0.8915, "dens": 3118.0, "cost": 192466, "locv": 6549.0}, {"naam": "Dahliablok", "gem": "Rotterdam", "pc": "3073VM", "lat": 51.895372, "lon": 4.505017, "go": 83.8636, "goU": 88.0, "bb1": 65, "druk2": 0.9439, "nhg": 450000, "pm2": 4605.88, "grond": 1, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 3.0833, "method": "PC6 exact", "exact": true, "resid": 19.668, "dem55": 10.0, "mgi1": 0.7609, "dens": 17930.0, "cost": 192466, "locv": 6535.0}, {"naam": "De Kuil", "gem": "Rotterdam", "pc": "3072RA", "lat": 51.902463, "lon": 4.501905, "go": 63.0909, "goU": 66.0, "bb1": 52, "druk2": 0.963, "nhg": 405000, "pm2": 5789.22, "grond": 1, "mgw": 100.0, "mvk": 12, "jaar": 2023, "afst": 2.8862, "method": "PC5-benadering (n=11)", "exact": true, "resid": 0.015, "dem55": 12.0, "mgi1": 0.8348, "dens": 12769.0, "cost": 209451, "locv": 6000.0}, {"naam": "Hillehuis", "gem": "Rotterdam", "pc": "3074EM", "lat": 51.896986, "lon": 4.511035, "go": 69.666, "goU": 69.666, "bb1": 64, "druk2": 0.9076, "nhg": 470000, "pm2": 5931.0, "grond": 1, "mgw": 100.0, "mvk": 10, "jaar": 2026, "afst": 3.3473, "method": "PC6 exact", "exact": true, "resid": 3.342, "dem55": 10.0, "mgi1": 0.7696, "dens": 13719.0, "cost": 192466, "locv": 6563.0}, {"naam": "Het Heij", "gem": "Rotterdam", "pc": "3089TR", "lat": 51.891671, "lon": 4.417781, "go": 97.0, "goU": 97.0, "bb1": 97, "druk2": 0.7061, "nhg": 450000, "pm2": 4793.0, "grond": 1, "mgw": 0.0, "mvk": 1, "jaar": 2025, "afst": 4.6966, "method": "PC5-benadering (n=8)", "exact": true, "resid": 18.863, "dem55": 1.0, "mgi1": 0.7689, "dens": 4825.0, "cost": 198460, "locv": 4888.0}, {"naam": "Via insulea", "gem": "Rotterdam", "pc": "3037BL", "lat": 51.931988, "lon": 4.469932, "go": 60.9259, "goU": 60.9259, "bb1": 52, "druk2": 1.0103, "nhg": 450000, "pm2": 6880.0, "grond": 1, "mgw": 100.0, "mvk": 14, "jaar": 2025, "afst": 1.7529, "method": "PC6 exact", "exact": true, "resid": 0.623, "dem55": 14.0, "mgi1": 0.9581, "dens": 18645.0, "cost": 194464, "locv": 6994.0}, {"naam": "De Wielewaal", "gem": "Rotterdam", "pc": "3084PJ", "lat": 51.881327, "lon": 4.462484, "go": 102.65, "goU": 104.556, "bb1": 60, "druk2": 0.662, "nhg": 435000, "pm2": 4095.3, "grond": 0, "mgw": 13.333, "mvk": 4, "jaar": 2024, "afst": 3.9758, "method": "PC6 exact", "exact": true, "resid": 21.927, "dem55": 4.0, "mgi1": 0.8143, "dens": 1482.0, "cost": 198460, "locv": 4650.0}, {"naam": "De vaan", "gem": "Rotterdam", "pc": "3075BB", "lat": 51.881871, "lon": 4.502324, "go": 80.777, "goU": 82.5, "bb1": 67, "druk2": 0.721, "nhg": 435000, "pm2": 4866.57, "grond": 1, "mgw": 100.0, "mvk": 11, "jaar": 2024, "afst": 4.2313, "method": "PC6 exact", "exact": true, "resid": 3.513, "dem55": 11.0, "mgi1": 0.7288, "dens": 7570.0, "cost": 192466, "locv": 4825.0}, {"naam": "WilhelmsPark", "gem": "Rotterdam", "pc": "3194HP", "lat": 51.870926, "lon": 4.361395, "go": 87.0755, "goU": 89.32, "bb1": 76, "druk2": 0.6038, "nhg": 450000, "pm2": 5021.0, "grond": 0, "mgw": 100.0, "mvk": 3, "jaar": 2025, "afst": 9.2199, "method": "PC6 exact", "exact": true, "resid": 2.94, "dem55": 3.0, "mgi1": 0.7331, "dens": 2768.0, "cost": 196462, "locv": 4180.0}, {"naam": "Rise", "gem": "Eindhoven", "pc": "5613LE", "lat": 51.434995, "lon": 5.497155, "go": 61.1042, "goU": 66.1875, "bb1": 50, "druk2": 1.0331, "nhg": 450000, "pm2": 6625.17, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2025, "afst": 1.2718, "method": "PC6 exact", "exact": true, "resid": 2.138, "dem55": 5.0, "mgi1": 0.9097, "dens": 5031.0, "cost": 192466, "locv": 7152.0}, {"naam": "Bloom (Eindhoven)", "gem": "Eindhoven", "pc": "5613LE", "lat": 51.434487, "lon": 5.501146, "go": 64.4286, "goU": 68.6333, "bb1": 51, "druk2": 0.9766, "nhg": 435000, "pm2": 5470.8, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2024, "afst": 1.2718, "method": "PC6 exact", "exact": true, "resid": 2.15, "dem55": 5.0, "mgi1": 0.8441, "dens": 5031.0, "cost": 192466, "locv": 6536.0}, {"naam": "Strijp S4", "gem": "Eindhoven", "pc": "5616LD", "lat": 51.444159, "lon": 5.461149, "go": 54.8446, "goU": 55.25, "bb1": 50, "druk2": 1.0076, "nhg": 450000, "pm2": 7806.46, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2026, "afst": 1.1735, "method": "PC6 exact", "exact": true, "resid": -5.616, "dem55": 5.0, "mgi1": 1.0133, "dens": 10476.0, "cost": 192466, "locv": 6976.0}, {"naam": "The Suites", "gem": "Amsterdam", "pc": "1095PA", "lat": 52.37365, "lon": 4.95871, "go": 30.7119, "goU": 30.7112, "bb1": 30, "druk2": 1.2045, "nhg": 435000, "pm2": 9193.18, "grond": 1, "mgw": 100.0, "mvk": 14, "jaar": 2024, "afst": 3.765, "method": "PC6 exact", "exact": true, "resid": -18.205, "dem55": 14.0, "mgi1": 1.1234, "dens": 4927.0, "cost": 207858, "locv": 8061.0}, {"naam": "Nelson Smile", "gem": "Amsterdam", "pc": "1102DR", "lat": 52.315541, "lon": 4.958854, "go": 55.7143, "goU": 56.4, "bb1": 54, "druk2": 1.0101, "nhg": 450000, "pm2": 6822.75, "grond": 1, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 6.8783, "method": "PC6 exact", "exact": true, "resid": -4.6, "dem55": 10.0, "mgi1": 1.0241, "dens": 5442.0, "cost": 207858, "locv": 6993.0}, {"naam": "Orange Polly", "gem": "Amsterdam", "pc": "1032KN", "lat": 52.400619, "lon": 4.907836, "go": 45.0, "goU": 49.0, "bb1": 30, "druk2": 1.1321, "nhg": 450000, "pm2": 8783.19, "grond": 0, "mgw": 100.0, "mvk": 28, "jaar": 2025, "afst": 3.4269, "method": "PC5-benadering (n=17)", "exact": true, "resid": -8.161, "dem55": 28.0, "mgi1": 1.2536, "dens": 659.0, "cost": 207858, "locv": 7838.0}, {"naam": "Red Polly", "gem": "Amsterdam", "pc": "1032KN", "lat": 52.401176, "lon": 4.906275, "go": 50.2, "goU": 51.4, "bb1": 39, "druk2": 1.1321, "nhg": 450000, "pm2": 8055.85, "grond": 1, "mgw": 100.0, "mvk": 28, "jaar": 2025, "afst": 3.4269, "method": "PC5-benadering (n=17)", "exact": true, "resid": -2.961, "dem55": 28.0, "mgi1": 1.2536, "dens": 659.0, "cost": 207858, "locv": 7838.0}, {"naam": "Werfkade / Kaap", "gem": "Amsterdam", "pc": "1033TA", "lat": 52.4021, "lon": 4.88836, "go": 50.4583, "goU": 56.0, "bb1": 47, "druk2": 1.2835, "nhg": 405000, "pm2": 6352.57, "grond": 1, "mgw": 100.0, "mvk": 8, "jaar": 2023, "afst": 3.9839, "method": "PC6 exact", "exact": true, "resid": 6.173, "dem55": 8.0, "mgi1": 1.2589, "dens": 10172.0, "cost": 207858, "locv": 7997.0}, {"naam": "Up North", "gem": "Amsterdam", "pc": "1032HZ", "lat": 52.399259, "lon": 4.9087, "go": 51.3846, "goU": 53.153, "bb1": 44, "druk2": 1.2379, "nhg": 405000, "pm2": 7102.25, "grond": 1, "mgw": 100.0, "mvk": 28, "jaar": 2023, "afst": 3.5347, "method": "PC6 exact", "exact": true, "resid": 4.426, "dem55": 28.0, "mgi1": 1.2296, "dens": 659.0, "cost": 207858, "locv": 7713.0}, {"naam": "PAM Weesp", "gem": "Amsterdam", "pc": "1382CH", "lat": 52.310471, "lon": 5.025814, "go": 44.76, "goU": 72.9048, "bb1": 40, "druk2": 0.9625, "nhg": 450000, "pm2": 5516.45, "grond": 0, "mgw": 100.0, "mvk": 6, "jaar": 2025, "afst": 10.4243, "method": "PC6 exact", "exact": true, "resid": -18.345, "dem55": 6.0, "mgi1": 0.9525, "dens": 3987.0, "cost": 207858, "locv": 6664.0}, {"naam": "Bajeskwartier", "gem": "Amsterdam", "pc": "1096AG", "lat": 52.338255, "lon": 4.925995, "go": 36.5508, "goU": 37.0561, "bb1": 34, "druk2": 1.5031, "nhg": 405000, "pm2": 9063.35, "grond": 0, "mgw": 100.0, "mvk": 28, "jaar": 2023, "afst": 3.4894, "method": "PC5-benadering (n=12)", "exact": true, "resid": 5.141, "dem55": 28.0, "mgi1": 1.2521, "dens": 3087.0, "cost": 212402, "locv": 9366.0}, {"naam": "Fushion", "gem": "Amsterdam", "pc": "1102AK", "lat": 52.322535, "lon": 4.957044, "go": 55.6056, "goU": 67.4, "bb1": 49, "druk2": 0.9908, "nhg": 450000, "pm2": 7068.8, "grond": 0, "mgw": 100.0, "mvk": 13, "jaar": 2025, "afst": 6.1655, "method": "PC6 exact", "exact": true, "resid": -5.84, "dem55": 13.0, "mgi1": 1.0001, "dens": 8813.0, "cost": 207858, "locv": 6859.0}, {"naam": "Vreeswijkpad", "gem": "Amsterdam", "pc": "1106DV", "lat": 52.296835, "lon": 4.984574, "go": 70.068, "goU": 70.068, "bb1": 70, "druk2": 1.1033, "nhg": 405000, "pm2": 5068.2, "grond": 1, "mgw": 100.0, "mvk": 6, "jaar": 2023, "afst": 9.5035, "method": "PC6 exact", "exact": true, "resid": 15.218, "dem55": 6.0, "mgi1": 0.8433, "dens": 5040.0, "cost": 207858, "locv": 6874.0}, {"naam": "Ace Amsterdam", "gem": "Amsterdam", "pc": "1064AB", "lat": 52.37191, "lon": 4.833796, "go": 43.2121, "goU": 61.8, "bb1": 31, "druk2": 1.1333, "nhg": 450000, "pm2": 8348.18, "grond": 1, "mgw": 100.0, "mvk": 24, "jaar": 2025, "afst": 4.8003, "method": "PC6 exact", "exact": true, "resid": -9.879, "dem55": 24.0, "mgi1": 1.1422, "dens": 8475.0, "cost": 207858, "locv": 7846.0}, {"naam": "De Oosterlingen", "gem": "Amsterdam", "pc": "1018CA", "lat": 52.371652, "lon": 4.929462, "go": 45.1923, "goU": 46.2727, "bb1": 39, "druk2": 1.3691, "nhg": 450000, "pm2": 9365.86, "grond": 0, "mgw": 100.0, "mvk": 35, "jaar": 2025, "afst": 1.777, "method": "PC6 exact", "exact": true, "resid": 5.926, "dem55": 35.0, "mgi1": 1.4801, "dens": 18197.0, "cost": 207858, "locv": 9478.0}, {"naam": "The Hive", "gem": "Amsterdam", "pc": "1062HE", "lat": 52.35695, "lon": 4.838462, "go": 50.0, "goU": 50.0, "bb1": 50, "druk2": 1.2669, "nhg": 450000, "pm2": 7957.92, "grond": 1, "mgw": 100.0, "mvk": 26, "jaar": 2025, "afst": 4.6145, "method": "PC6 exact", "exact": true, "resid": 4.742, "dem55": 26.0, "mgi1": 1.2969, "dens": 14376.0, "cost": 207858, "locv": 8770.0}, {"naam": "Kubus Noord", "gem": "Amsterdam", "pc": "1024SN", "lat": 52.39529, "lon": 4.951122, "go": 52.6897, "goU": 58.6364, "bb1": 41, "druk2": 0.9693, "nhg": 435000, "pm2": 7329.0, "grond": 1, "mgw": 100.0, "mvk": 13, "jaar": 2024, "afst": 4.2377, "method": "PC6 exact", "exact": true, "resid": -10.017, "dem55": 13.0, "mgi1": 1.0198, "dens": 13805.0, "cost": 226201, "locv": 6487.0}, {"naam": "Roof Garden", "gem": "Amsterdam", "pc": "1043BZ", "lat": 52.388658, "lon": 4.828984, "go": 52.0829, "goU": 57.535, "bb1": 39, "druk2": 1.1485, "nhg": 450000, "pm2": 6528.8, "grond": 1, "mgw": 100.0, "mvk": 16, "jaar": 2025, "afst": 5.614, "method": "PC6 exact", "exact": true, "resid": -0.117, "dem55": 16.0, "mgi1": 1.1234, "dens": 1361.0, "cost": 207858, "locv": 7951.0}, {"naam": "Vertical", "gem": "Amsterdam", "pc": "1043NV", "lat": 52.387281, "lon": 4.834792, "go": 46.6667, "goU": 46.6667, "bb1": 44, "druk2": 1.475, "nhg": 325000, "pm2": 6719.15, "grond": 1, "mgw": 100.0, "mvk": 16, "jaar": 2021, "afst": 5.1317, "method": "PC6 exact", "exact": true, "resid": 13.609, "dem55": 16.0, "mgi1": 1.1676, "dens": 5094.0, "cost": 226201, "locv": 7375.0}, {"naam": "MO*town Track 6", "gem": "Amsterdam", "pc": "1043NV", "lat": 52.386281, "lon": 4.835992, "go": 49.6875, "goU": 49.6875, "bb1": 47, "druk2": 1.475, "nhg": 325000, "pm2": 5623.0, "grond": 1, "mgw": 100.0, "mvk": 16, "jaar": 2021, "afst": 5.1317, "method": "PC6 exact", "exact": true, "resid": 16.63, "dem55": 16.0, "mgi1": 1.1676, "dens": 5094.0, "cost": 226201, "locv": 7375.0}, {"naam": "One50", "gem": "Amsterdam", "pc": "1024MS", "lat": 52.392063, "lon": 4.95816, "go": 46.15, "goU": 56.909, "bb1": 56, "druk2": 1.0006, "nhg": 450000, "pm2": 7425.24, "grond": 1, "mgw": 100.0, "mvk": 5, "jaar": 2025, "afst": 4.5665, "method": "PC5-benadering (n=14)", "exact": true, "resid": -14.721, "dem55": 5.0, "mgi1": 0.9769, "dens": 10822.0, "cost": 207858, "locv": 6927.0}, {"naam": "Elzenhagen", "gem": "Amsterdam", "pc": "1025WK", "lat": 52.401366, "lon": 4.926158, "go": 63.3675, "goU": 65.5556, "bb1": 45, "druk2": 1.0833, "nhg": 450000, "pm2": 6313.97, "grond": 1, "mgw": 100.0, "mvk": 11, "jaar": 2025, "afst": 4.0417, "method": "PC6 exact", "exact": true, "resid": 7.345, "dem55": 11.0, "mgi1": 1.0518, "dens": 5406.0, "cost": 207858, "locv": 7500.0}, {"naam": "Spot", "gem": "Amsterdam", "pc": "1101DA", "lat": 52.307144, "lon": 4.946179, "go": 49.7273, "goU": 57.7143, "bb1": 46, "druk2": 0.914, "nhg": 435000, "pm2": 6458.12, "grond": 1, "mgw": 100.0, "mvk": 10, "jaar": 2024, "afst": 7.303, "method": "PC6 exact", "exact": true, "resid": -16.221, "dem55": 10.0, "mgi1": 1.033, "dens": 1247.0, "cost": 207879, "locv": 6117.0}, {"naam": "Brisk", "gem": "Amsterdam", "pc": "1101BA", "lat": 52.309271, "lon": 4.946302, "go": 53.68, "goU": 55.8421, "bb1": 41, "druk2": 0.9663, "nhg": 450000, "pm2": 7463.0, "grond": 0, "mgw": 100.0, "mvk": 10, "jaar": 2025, "afst": 7.0893, "method": "PC6 exact", "exact": true, "resid": -9.202, "dem55": 10.0, "mgi1": 1.1007, "dens": 1247.0, "cost": 207879, "locv": 6690.0}, {"naam": "KBF Docks", "gem": "Amsterdam", "pc": "1096BN", "lat": 52.33515, "lon": 4.918487, "go": 45.66, "goU": 45.66, "bb1": 45, "druk2": 1.423, "nhg": 450000, "pm2": 7907.66, "grond": 1, "mgw": 100.0, "mvk": 21, "jaar": 2025, "afst": 3.7366, "method": "PC6 exact", "exact": true, "resid": 9.554, "dem55": 21.0, "mgi1": 1.3302, "dens": 3539.0, "cost": 207879, "locv": 9851.0}, {"naam": "Ease", "gem": "Amsterdam", "pc": "1103AZ", "lat": 52.325874, "lon": 4.968309, "go": 65.11, "goU": 65.11, "bb1": 63, "druk2": 0.9874, "nhg": 450000, "pm2": 6377.78, "grond": 1, "mgw": 100.0, "mvk": 18, "jaar": 2025, "afst": 6.3313, "method": "PC6 exact", "exact": true, "resid": 3.465, "dem55": 18.0, "mgi1": 0.9881, "dens": 7661.0, "cost": 207879, "locv": 6836.0}, {"naam": "De Jacob", "gem": "Amsterdam", "pc": "1065BH", "lat": 52.359742, "lon": 4.821977, "go": 50.0, "goU": 50.0, "bb1": 50, "druk2": 1.3209, "nhg": 405000, "pm2": 6757.41, "grond": 1, "mgw": 100.0, "mvk": 21, "jaar": 2023, "afst": 5.6473, "method": "PC6 exact", "exact": true, "resid": 7.908, "dem55": 21.0, "mgi1": 1.1492, "dens": 9808.0, "cost": 207858, "locv": 8230.0}, {"naam": "Geins", "gem": "Amsterdam", "pc": "1106AD", "lat": 52.298428, "lon": 4.973489, "go": 70.0, "goU": 70.0, "bb1": 70, "druk2": 1.1035, "nhg": 405000, "pm2": 5064.01, "grond": 1, "mgw": 100.0, "mvk": 4, "jaar": 2023, "afst": 9.0192, "method": "PC6 exact", "exact": true, "resid": 15.162, "dem55": 4.0, "mgi1": 0.8071, "dens": 9693.0, "cost": 207858, "locv": 6875.0}, {"naam": "Dialogue", "gem": "Amsterdam", "pc": "1096DS", "lat": 52.336143, "lon": 4.929664, "go": 41.5, "goU": 41.5, "bb1": 39, "druk2": 1.3793, "nhg": 450000, "pm2": 9840.91, "grond": 0, "mgw": 100.0, "mvk": 14, "jaar": 2025, "afst": 3.1751, "method": "PC6 exact", "exact": true, "resid": 2.832, "dem55": 14.0, "mgi1": 1.2019, "dens": 4063.0, "cost": 198460, "locv": 9549.0}, {"naam": "ZOE", "gem": "Amsterdam", "pc": "1095KN", "lat": 52.376676, "lon": 4.958611, "go": 49.5217, "goU": 52.1111, "bb1": 40, "druk2": 1.3204, "nhg": 450000, "pm2": 7861.0, "grond": 1, "mgw": 100.0, "mvk": 8, "jaar": 2025, "afst": 4.7248, "method": "PC6 exact", "exact": true, "resid": 7.4, "dem55": 8.0, "mgi1": 1.2087, "dens": 3862.0, "cost": 207858, "locv": 9141.0}, {"naam": "De Suikerzijde fase 2", "gem": "Groningen", "pc": "9743DC", "lat": 53.212455, "lon": 6.52287, "go": 70.617, "goU": 77.0, "bb1": 58, "druk2": 0.76, "nhg": 450000, "pm2": 4923.13, "grond": 1, "mgw": 40.0, "mvk": 1, "jaar": 2026, "afst": 3.0056, "method": "PC5-benadering (n=1)", "exact": false, "resid": -4.36, "dem55": 1.0, "mgi1": 0.7575, "dens": 225.0, "cost": 190468, "locv": 5488.0}, {"naam": "Het baken van meerstad", "gem": "Groningen", "pc": "9613GE", "lat": 53.228938, "lon": 6.671421, "go": 82.684, "goU": 82.6841, "bb1": 74, "druk2": 0.7495, "nhg": 450000, "pm2": 5102.18, "grond": 1, "mgw": 100.0, "mvk": 0, "jaar": 2026, "afst": 7.0649, "method": "PC5-benadering (n=5)", "exact": false, "resid": 7.091, "dem55": 0.0, "mgi1": 0.8027, "dens": 647.0, "cost": 207256, "locv": 5189.0}, {"naam": "O kade", "gem": "Groningen", "pc": "9714BA", "lat": 53.225927, "lon": 6.566548, "go": 64.0, "goU": 64.0, "bb1": 52, "druk2": 0.6854, "nhg": 450000, "pm2": 5978.0, "grond": 0, "mgw": 76.9231, "mvk": 3, "jaar": 2025, "afst": 0.7276, "method": "PC6 exact", "exact": true, "resid": -15.351, "dem55": 3.0, "mgi1": 0.8241, "dens": 12296.0, "cost": 190468, "locv": 5489.0}, {"naam": "Aan de kade", "gem": "Leiden", "pc": "2314BC", "lat": 52.148214, "lon": 4.523084, "go": 55.0, "goU": 55.0, "bb1": 55, "druk2": 1.0263, "nhg": 450000, "pm2": 6721.21, "grond": 0, "mgw": 100.0, "mvk": 5, "jaar": 2025, "afst": 3.4108, "method": "PC6 exact", "exact": true, "resid": -4.364, "dem55": 5.0, "mgi1": 0.9519, "dens": 3324.0, "cost": 196536, "locv": 7105.0}, {"naam": "De Brugwachters", "gem": "Delft", "pc": "2627AH", "lat": 52.002049, "lon": 4.362767, "go": 69.95, "goU": 74.8182, "bb1": 64, "druk2": 0.8963, "nhg": 450000, "pm2": 5732.88, "grond": 0, "mgw": 100.0, "mvk": 11, "jaar": 2025, "afst": 0.9484, "method": "PC6 exact", "exact": true, "resid": 2.964, "dem55": 11.0, "mgi1": 0.9407, "dens": 9823.0, "cost": 200532, "locv": 6205.0}, {"naam": "De Paltrok", "gem": "Zaandstad", "pc": "1508EK", "lat": 52.457609, "lon": 4.816586, "go": 55.2308, "goU": 71.52, "bb1": 30, "druk2": 1.0191, "nhg": 450000, "pm2": 6299.1, "grond": 0, "mgw": 100.0, "mvk": 12, "jaar": 2025, "afst": 2.1084, "method": "PC6 exact", "exact": true, "resid": -4.556, "dem55": 12.0, "mgi1": 0.8003, "dens": 1400.0, "cost": 198460, "locv": 7055.0}, {"naam": "Hazenpark", "gem": "Nijmegen", "pc": "6531LA", "lat": 51.829842, "lon": 5.844769, "go": 81.7059, "goU": 81.7059, "bb1": 80, "druk2": 0.9918, "nhg": 435000, "pm2": 4696.23, "grond": 0, "mgw": 0.0, "mvk": 3, "jaar": 2024, "afst": 1.9197, "method": "PC6 exact", "exact": true, "resid": 20.319, "dem55": 3.0, "mgi1": 0.8756, "dens": 5933.0, "cost": 200059, "locv": 6638.0}, {"naam": "Ruby", "gem": "Nijmegen", "pc": "6541AZ", "lat": 51.852803, "lon": 5.847945, "go": 68.0, "goU": 77.0, "bb1": 50, "druk2": 0.9282, "nhg": 435000, "pm2": 5736.02, "grond": 1, "mgw": 100.0, "mvk": 3, "jaar": 2024, "afst": 1.3288, "method": "PC5-benadering (n=19)", "exact": true, "resid": 2.884, "dem55": 3.0, "mgi1": 0.8062, "dens": 9339.0, "cost": 200734, "locv": 6212.0}];
+const NEUTRAL = 65;
+
+/* ---------- color ---------- */
+function lerp(a,b,t){return a+(b-a)*t}
+function hx(c){return '#'+c.map(x=>Math.round(x).toString(16).padStart(2,'0')).join('')}
+function ramp(stops,t){t=Math.max(0,Math.min(1,t));const s=t*(stops.length-1);const i=Math.floor(s);const f=s-i;
+  if(i>=stops.length-1)return hx(stops[stops.length-1]);return hx(stops[i].map((c,k)=>lerp(c,stops[i+1][k],f)));}
+const redStops=[[178,24,43],[214,96,77],[239,138,98],[247,243,234]];
+const blueStops=[[247,243,234],[146,197,222],[67,147,195],[33,102,172]];
+/* betaalbaarheidsfrictie: verankerd op 1,0 — neutraal op/onder 1, oplopende frictie erboven */
+const fricLow=[[176,184,180],[226,218,204]];               // geen frictie (rustig, koel) → neutraal bij 1,0
+const fricHigh=[[226,218,204],[201,120,74],[140,36,32]];   // boven 1,0: neutraal → terracotta → diep oxbloed
+function fricColor(v){
+  if(v<=1){const a=R.druk[0];return ramp(fricLow, a<1?(v-a)/(1-a):1);}
+  const b=R.druk[1];return ramp(fricHigh, b>1?(v-1)/(b-1):0);
+}
+// residual diverging (grey-centred so the "no pattern" state reads as flat/neutral)
+const resNeg=[[120,140,110],[178,190,168],[233,232,224]];   // below-expected → muted green
+const resPos=[[233,232,224],[196,178,150],[150,120,80]];     // above-expected → muted tan
+const demStops=[[255,247,188],[254,196,79],[217,95,14],[153,52,4],[80,20,20]]; // demand low→high, high contrast
+const demSorted=DATA.map(d=>d.dem55).sort((a,b)=>a-b);
+function demRank(v){ // fraction of projects at or below v (quantile position)
+  let lo=0,hi=demSorted.length;while(lo<hi){const m=(lo+hi)>>1;if(demSorted[m]<v)lo=m+1;else hi=m;}
+  return demSorted.length>1?lo/(demSorted.length-1):0.5;}
+const GROND_ACT=[47,95,90], GROND_FAC=[201,139,58];          // active vs facilitating
+const STUDIO=[154,59,46];
+const gosAll=DATA.map(d=>d.go),druksAll=DATA.map(d=>d.druk2),demAll=DATA.map(d=>d.dem55),resAll=DATA.map(d=>d.resid);
+const R={go:[Math.min(...gosAll),Math.max(...gosAll)],druk:[Math.min(...druksAll),Math.max(...druksAll)],
+  dem:[Math.min(...demAll),Math.max(...demAll)],resAbs:Math.max(...resAll.map(Math.abs))};
+let mode='go', shapeMode=false, studioOn=false;
+const CAT_MODES=new Set(['grond']);        // modes that use a categorical legend
+const isStudio=d=>d.go<50;
+function colorFor(d){
+  if(studioOn) return isStudio(d)?hx(STUDIO):'#d9d3c6';
+  if(mode==='go'){ if(d.go<=NEUTRAL){const a=R.go[0];return ramp(redStops,(d.go-a)/(NEUTRAL-a));}
+    const b=R.go[1];return ramp(blueStops,(d.go-NEUTRAL)/(b-NEUTRAL)); }
+  if(mode==='druk'){return fricColor(d.druk2);}
+  if(mode==='grond'){return hx(d.grond===1?GROND_ACT:GROND_FAC);}
+  if(mode==='vraag'){return ramp(demStops,demRank(d.dem55));}
+  return '#999';
+}
+const hollow=d=>shapeMode&&d.grond===0;
+
+/* ---------- filter state ---------- */
+let curGem='';
+let curYears=new Set(DATA.map(d=>d.jaar));
+let curGrond='';
+function visible(d){ if(curGem&&d.gem!==curGem)return false; if(!curYears.has(d.jaar))return false; if(curGrond!==''&&String(d.grond)!==curGrond)return false; return true; }
+
+/* ---------- map ---------- */
+if(typeof L==='undefined'){
+  document.getElementById('map').innerHTML='<div style="padding:40px;font-family:Georgia,serif;color:#6f685e;line-height:1.6;max-width:420px;margin:60px auto;text-align:center"><b style="color:#9a3b2e;font-size:16px">Kaartbibliotheek kon niet laden.</b><br><br>Controleer de internetverbinding en herlaad de pagina. De kaart heeft eenmalig internet nodig om Leaflet en de tegels op te halen.</div>';
+  throw new Error('Leaflet not loaded');
+}
+const map=L.map('map',{zoomControl:true});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+map.fitBounds(DATA.map(d=>[d.lat,d.lon]),{padding:[40,40]});
+const markers=[];
+function radius(go){const[a,b]=R.go;return 6+13*((go-a)/(b-a));}
+function mStyle(d){const f=!hollow(d);return{radius:radius(d.go),fillColor:colorFor(d),
+  color:f?(d.exact?'#fff':'#b4ab9c'):colorFor(d),weight:f?(d.exact?1.2:2):2.4,
+  dashArray:d.exact?null:'3 3',fillOpacity:f?.88:.12};}
+function popup(d){const grond=d.grond===1?'Actief':(d.grond===0?'Facilitair':'—');
+  return `<div class="lp"><h3>${d.naam}</h3><div class="pc">${d.gem} · ${d.jaar??''}</div><table>
+   <tr><td>Woningoppervlak (GO)</td><td><b>${d.go.toFixed(1)} m²${d.go<50?' &middot; <span style="color:#9a3b2e">klein</span>':''}</b></td></tr>
+   <tr><td>Bovenrange GO (top 15%)</td><td>${d.goU.toFixed(1)} m²</td></tr>
+   <tr><td>Betaalbaarheidsfrictie (MGI)</td><td>${d.druk2.toFixed(2)}</td></tr>
+   <tr><td>Prijs / m²</td><td>€ ${d.pm2?d.pm2.toLocaleString('nl-NL'):'—'}</td></tr>
+   <tr><td>NHG-grens</td><td>€ ${d.nhg?d.nhg.toLocaleString('nl-NL'):'—'}</td></tr>
+   <tr><td>Grondbeleid</td><td>${grond}</td></tr>
+   <tr><td>Aandeel MGW</td><td>${d.mgw!=null?Math.round(d.mgw)+' %':'—'}</td></tr>
+   <tr><td>Marktvraag &lt; 55 m²</td><td>${d.dem55??'—'}</td></tr>
+  </table>${d.exact?'':'<div class="flag">⚠ locatie bij benadering</div>'}</div>`;}
+DATA.forEach((d,i)=>{
+  const mk=L.circleMarker([d.lat,d.lon],mStyle(d)).bindPopup(popup(d));
+  mk.on('mouseover',()=>{hi(i,true);hiLab(i,true);}); mk.on('mouseout',()=>{hi(i,false);hiLab(i,false);}); mk.on('click',()=>{select(i,'map');hiLab(i,true);});
+  mk.addTo(map); markers.push(mk);
+});
+
+/* ---------- scatter ---------- */
+const NS='http://www.w3.org/2000/svg';
+const ML=48,MR=16,MT=14,MB=44,VW=430,VH=392,PW=VW-ML-MR,PH=VH-MT-MB;
+const X0=0.4,X1=1.55,Y0=25,Y1=132;
+const sx=v=>ML+(v-X0)/(X1-X0)*PW, sy=v=>MT+(1-(v-Y0)/(Y1-Y0))*PH;
+const svg=document.getElementById('scsvg');
+const scPts=[]; let regline;
+function el(n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function scStyle(c,d){const f=!hollow(d);c.setAttribute('fill',colorFor(d));
+  c.setAttribute('fill-opacity',f?1:.15);c.setAttribute('stroke',f?'#fff':colorFor(d));c.setAttribute('stroke-width',f?1:1.6);}
+function buildScatter(){
+  svg.innerHTML='';
+  [40,60,80,100,120].forEach(g=>{svg.appendChild(el('line',{x1:ML,y1:sy(g),x2:ML+PW,y2:sy(g),stroke:'#ece5d8','stroke-width':1}));
+    svg.appendChild(el('text',{x:ML-8,y:sy(g)+4,'text-anchor':'end','font-size':10,fill:'#6f685e'})).textContent=g;});
+  [0.6,0.8,1.0,1.2,1.4].forEach(g=>{svg.appendChild(el('line',{x1:sx(g),y1:MT,x2:sx(g),y2:MT+PH,stroke:'#ece5d8','stroke-width':1}));
+    svg.appendChild(el('text',{x:sx(g),y:MT+PH+18,'text-anchor':'middle','font-size':10,fill:'#6f685e'})).textContent=g.toFixed(1);});
+  svg.appendChild(el('line',{x1:ML,y1:sy(65),x2:ML+PW,y2:sy(65),stroke:'#c9a86a','stroke-width':1,'stroke-dasharray':'4 3'}));
+  svg.appendChild(el('text',{x:ML+PW-2,y:sy(65)-4,'text-anchor':'end','font-size':9.5,fill:'#b08a3e'})).textContent='65 m²';
+  svg.appendChild(el('line',{x1:sx(1),y1:MT,x2:sx(1),y2:MT+PH,stroke:'#d8cdbb','stroke-width':1,'stroke-dasharray':'4 3'}));
+  svg.appendChild(el('text',{x:sx(1),y:MT+10,'text-anchor':'middle','font-size':9.5,fill:'#9a8f7d'})).textContent='druk = 1';
+  regline=el('line',{stroke:'#1c1a17','stroke-width':2}); svg.appendChild(regline);
+  svg.appendChild(el('text',{x:ML+PW/2,y:VH-6,'text-anchor':'middle','font-size':11.5,fill:'#1c1a17','font-weight':600})).textContent='Betaalbaarheidsfrictie';
+  const yt=el('text',{id:'yaxt',x:14,y:MT+PH/2,'text-anchor':'middle','font-size':11.5,fill:'#1c1a17','font-weight':600,transform:`rotate(-90 14 ${MT+PH/2})`});yt.textContent='Woningoppervlak GO (m²)';svg.appendChild(yt);
+  scPts.length=0;
+  DATA.forEach((d,i)=>{
+    const c=el('circle',{cx:sx(d.druk2),cy:sy(d.go),r:4.2,class:'sc-pt'}); scStyle(c,d);
+    c.addEventListener('mouseover',ev=>{hi(i,true);tip(ev,d);});
+    c.addEventListener('mousemove',ev=>tip(ev,d));
+    c.addEventListener('mouseout',()=>{hi(i,false);hideTip();});
+    c.addEventListener('click',()=>select(i,'scatter'));
+    svg.appendChild(c); scPts.push(c);
+  });
+}
+
+/* ---------- regression (OLS + Student-t p) ---------- */
+function gammaln(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x,tmp=x+5.5;tmp-=(x+0.5)*Math.log(tmp);let ser=1.000000000190015;for(let j=0;j<6;j++){y++;ser+=c[j]/y;}return -tmp+Math.log(2.5066282746310005*ser/x);}
+function betacf(a,b,x){const MAXIT=200,EPS=3e-7,FPMIN=1e-30;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;
+  if(Math.abs(d)<FPMIN)d=FPMIN;d=1/d;let h=d;for(let m=1;m<=MAXIT;m++){let m2=2*m,aa=m*(b-m)*x/((qam+m2)*(a+m2));
+  d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;d=1/d;h*=d*c;
+  aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<FPMIN)d=FPMIN;c=1+aa/c;if(Math.abs(c)<FPMIN)c=FPMIN;d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return h;}
+function betai(a,b,x){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(gammaln(a+b)-gammaln(a)-gammaln(b)+a*Math.log(x)+b*Math.log(1-x));
+  return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b;}
+function tP(t,v){if(v<=0)return NaN;return betai(v/2,0.5,v/(v+t*t));}
+function ols(pts){const n=pts.length;if(n<3)return null;let mx=0,my=0;pts.forEach(p=>{mx+=p.x;my+=p.y;});mx/=n;my/=n;
+  let sxx=0,sxy=0,syy=0;pts.forEach(p=>{const dx=p.x-mx,dy=p.y-my;sxx+=dx*dx;sxy+=dx*dy;syy+=dy*dy;});
+  if(sxx===0||syy===0)return null;const b=sxy/sxx,a=my-b*mx;let ssr=0;pts.forEach(p=>{const e=p.y-(a+b*p.x);ssr+=e*e;});
+  const r2=1-ssr/syy,dof=n-2,serr=Math.sqrt(ssr/dof),seb=serr/Math.sqrt(sxx),t=b/seb,p=tP(t,dof);
+  return{a,b,r2,n,p,xmin:Math.min(...pts.map(q=>q.x)),xmax:Math.max(...pts.map(q=>q.x))};}
+
+/* multiple regression for partial-residual corrections */
+function matInv(A){const n=A.length;const M=A.map((r,i)=>r.concat(Array.from({length:n},(_,j)=>i===j?1:0)));
+  for(let col=0;col<n;col++){let piv=col;for(let r=col+1;r<n;r++)if(Math.abs(M[r][col])>Math.abs(M[piv][col]))piv=r;
+    if(Math.abs(M[piv][col])<1e-12)return null;[M[col],M[piv]]=[M[piv],M[col]];
+    const dv=M[col][col];for(let j=0;j<2*n;j++)M[col][j]/=dv;
+    for(let r=0;r<n;r++){if(r===col)continue;const f=M[r][col];if(f)for(let j=0;j<2*n;j++)M[r][j]-=f*M[col][j];}}
+  return M.map(r=>r.slice(n));}
+function mreg(rows,ynm,xnms){const n=rows.length,p=xnms.length+1;if(n<p+1)return null;
+  const X=rows.map(r=>[1,...xnms.map(v=>r[v])]),y=rows.map(r=>r[ynm]);
+  const XtX=Array.from({length:p},()=>Array(p).fill(0)),Xty=Array(p).fill(0);
+  for(let i=0;i<n;i++)for(let a=0;a<p;a++){Xty[a]+=X[i][a]*y[i];for(let b=0;b<p;b++)XtX[a][b]+=X[i][a]*X[i][b];}
+  const inv=matInv(XtX);if(!inv)return null;
+  const beta=Array(p).fill(0);for(let a=0;a<p;a++)for(let b=0;b<p;b++)beta[a]+=inv[a][b]*Xty[b];
+  let sse=0,ybar=y.reduce((s,v)=>s+v,0)/n,sst=0;
+  for(let i=0;i<n;i++){let f=0;for(let a=0;a<p;a++)f+=beta[a]*X[i][a];sse+=(y[i]-f)**2;sst+=(y[i]-ybar)**2;}
+  const r2=1-sse/sst,dof=n-p,sigma2=sse/dof,seb=Math.sqrt(sigma2*inv[1][1]),t=beta[1]/seb,pv=tP(t,dof);
+  return{beta,intercept:beta[0],bdruk:beta[1],r2,n,p:pv,xnms,means:xnms.map(v=>rows.reduce((s,r)=>s+r[v],0)/n)};}
+
+/* full multiple regression: per-predictor B, SE, t, p — for the regression lab */
+function mregFull(rows,ynm,xnms){
+  const n=rows.length,p=xnms.length+1;if(n<p+1)return null;
+  const X=rows.map(r=>[1,...xnms.map(v=>r[v])]),y=rows.map(r=>r[ynm]);
+  const XtX=Array.from({length:p},()=>Array(p).fill(0)),Xty=Array(p).fill(0);
+  for(let i=0;i<n;i++)for(let a=0;a<p;a++){Xty[a]+=X[i][a]*y[i];for(let b=0;b<p;b++)XtX[a][b]+=X[i][a]*X[i][b];}
+  const inv=matInv(XtX);if(!inv)return null;
+  const beta=Array(p).fill(0);for(let a=0;a<p;a++)for(let b=0;b<p;b++)beta[a]+=inv[a][b]*Xty[b];
+  let sse=0,ybar=y.reduce((s,v)=>s+v,0)/n,sst=0;
+  for(let i=0;i<n;i++){let f=0;for(let a=0;a<p;a++)f+=beta[a]*X[i][a];sse+=(y[i]-f)**2;sst+=(y[i]-ybar)**2;}
+  const dof=n-p,sigma2=sse/dof;
+  const se=[],tv=[],pv=[];
+  for(let a=0;a<p;a++){const s=Math.sqrt(Math.max(0,sigma2*inv[a][a]));se.push(s);const tt=s>0?beta[a]/s:0;tv.push(tt);pv.push(tP(tt,dof));}
+  const r2=1-sse/sst,adj=1-(1-r2)*(n-1)/dof;
+  return{names:['(constante)',...xnms],beta,se,t:tv,p:pv,r2,adj,n,dof};}
+function computeFit(idx){
+  if(idx.length<3)return null;
+  const rows=idx.map(i=>DATA[i]).filter(r=>r.go!=null&&r.druk2!=null&&activeCtrls.every(c=>r[c]!=null));
+  if(rows.length<3)return null;
+  const dv=rows.map(r=>r.druk2);if(Math.max(...dv)-Math.min(...dv)<1e-9)return null;
+  const used=activeCtrls.filter(c=>{const v=rows.map(r=>r[c]);return Math.max(...v)-Math.min(...v)>1e-9;});
+  const fit=mreg(rows,'go',['druk2',...used]);if(!fit)return null;fit.ctrls=used;return fit;}
+function drawScatterData(idx){ /* superseded by the regression lab; kept as no-op so filters don't error */ return; }
+function drawScatterData_OLD(idx){
+  const vis=new Set(idx),fit=computeFit(idx);
+  const adj=i=>{const d=DATA[i];if(!fit||!fit.ctrls.length)return d.go;if(fit.ctrls.some(c=>d[c]==null))return d.go;
+    let yv=d.go;fit.ctrls.forEach(c=>{const k=fit.xnms.indexOf(c);yv-=fit.beta[k+1]*(d[c]-fit.means[k]);});return yv;};
+  scPts.forEach((cc,i)=>{if(!vis.has(i)){cc.style.display='none';return;}cc.style.display='';cc.setAttribute('cy',sy(adj(i)));scStyle(cc,DATA[i]);});
+  if(fit){regline.style.display='';let c0=fit.intercept;fit.ctrls.forEach(c=>{const k=fit.xnms.indexOf(c);c0+=fit.beta[k+1]*fit.means[k];});
+    const xs=idx.map(i=>DATA[i].druk2),xmin=Math.min(...xs),xmax=Math.max(...xs);
+    regline.setAttribute('x1',sx(xmin));regline.setAttribute('y1',sy(c0+fit.bdruk*xmin));
+    regline.setAttribute('x2',sx(xmax));regline.setAttribute('y2',sy(c0+fit.bdruk*xmax));}
+  else regline.style.display='none';
+  eqbox(fit,idx.length,fit?fit.ctrls:[]);
+  const yt=document.getElementById('yaxt');if(yt)yt.textContent=(fit&&fit.ctrls.length)?'Gecorrigeerde GO (m²)':'Woningoppervlak GO (m²)';
+  if(sel>=0&&vis.has(sel))hi(sel,true);}
+
+/* ---------- linking ---------- */
+let sel=-1;
+function hi(i,on){const d=DATA[i],act=on||i===sel;
+  const mk=markers[i];if(mk){const s=mStyle(d);if(act){s.color='#1c1a17';s.weight=3;}mk.setStyle(s);if(on&&mk.bringToFront)mk.bringToFront();}
+  const c=scPts[i];if(c){scStyle(c,d);c.setAttribute('r',act?6.5:4.2);if(act){c.setAttribute('stroke','#1c1a17');c.setAttribute('stroke-width',1.8);}}}
+function select(i,from){if(sel>=0&&sel!==i)hi(sel,false);sel=i;hi(i,true);const d=DATA[i];if(from==='scatter'){map.panTo([d.lat,d.lon]);markers[i].openPopup();}}
+const tipEl=document.getElementById('tip');
+function tip(ev,d){tipEl.style.opacity=1;tipEl.style.left=(ev.clientX+12)+'px';tipEl.style.top=(ev.clientY-10)+'px';tipEl.innerHTML=`<b>${d.naam}</b> · ${d.gem}<br>GO ${d.go.toFixed(1)} m² · druk ${d.druk2.toFixed(2)}`;}
+function hideTip(){tipEl.style.opacity=0;}
+
+/* ---------- apply filter ---------- */
+function applyFilter(refit){
+  const idx=[];DATA.forEach((d,i)=>{if(visible(d))idx.push(i);});
+  const vis=new Set(idx);
+  DATA.forEach((d,i)=>{const on=vis.has(i);const has=map.hasLayer(markers[i]);
+    if(on&&!has)markers[i].addTo(map); else if(!on&&has)map.removeLayer(markers[i]);});
+  drawScatterData(idx); stats(idx);
+  if(refit&&idx.length)map.fitBounds(idx.map(i=>[DATA[i].lat,DATA[i].lon]),{padding:[40,40],maxZoom:14});
+  if(sel>=0&&!vis.has(sel))sel=-1;
+}
+function styleAll(){markers.forEach((m,i)=>m.setStyle(mStyle(DATA[i])));scPts.forEach((c,i)=>scStyle(c,DATA[i]));if(sel>=0)hi(sel,true);}
+
+/* ---------- legend + stats + eq ---------- */
+function legend(){const tk=document.getElementById('tick65');
+  if(studioOn){document.getElementById('legbar').style.background=`linear-gradient(90deg,#d9d3c6 0%,#d9d3c6 55%,${hx(STUDIO)} 55%,${hx(STUDIO)} 100%)`;
+    tk.style.display='none';document.getElementById('legmin').textContent='≥ 50 m²';document.getElementById('legmax').textContent='< 50 m² (uitgelicht)';return;}
+  if(mode==='go'){const[a,b]=R.go;const pos=(NEUTRAL-a)/(b-a)*100;
+    document.getElementById('legbar').style.background=`linear-gradient(90deg, ${hx(redStops[0])} 0%, ${hx(redStops[2])} ${pos*0.6}%, ${hx([247,243,234])} ${pos}%, ${hx(blueStops[2])} ${pos+(100-pos)*0.6}%, ${hx(blueStops[3])} 100%)`;
+    tk.style.display='block';tk.style.left=pos+'%';
+    document.getElementById('legmin').textContent=a.toFixed(0)+' m² (klein)';document.getElementById('legmax').textContent=b.toFixed(0)+' m² (groot)';
+  }else if(mode==='druk'){const[a,b]=R.druk;const pos=(1-a)/(b-a)*100;
+    document.getElementById('legbar').style.background=`linear-gradient(90deg, ${hx(fricLow[0])} 0%, ${hx(fricLow[1])} ${pos.toFixed(1)}%, ${hx(fricHigh[1])} ${(pos+(100-pos)*0.55).toFixed(1)}%, ${hx(fricHigh[2])} 100%)`;
+    tk.style.display='block';tk.style.left=pos+'%';tk.textContent='1,0';
+    document.getElementById('legmin').textContent=a.toFixed(2).replace('.',',')+' (geen frictie)';document.getElementById('legmax').textContent=b.toFixed(2).replace('.',',')+' (hoge frictie)';
+  }else if(mode==='vraag'){document.getElementById('legbar').style.background='linear-gradient(90deg,'+demStops.map((c,i)=>hx(c)+' '+(i/(demStops.length-1)*100)+'%').join(',')+')';
+    tk.style.display='none';document.getElementById('legmin').textContent='lage vraag';document.getElementById('legmax').textContent='hoge vraag';}
+  if(mode==='go')tk.textContent='65 m²';}
+function stats(idx){const med=a=>{const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  if(!idx.length){document.getElementById('stats').innerHTML='<div class="stat"><span>Projecten</span><b>0</b></div>';return;}
+  const go=idx.map(i=>DATA[i].go),dr=idx.map(i=>DATA[i].druk2),gou=idx.map(i=>DATA[i].goU);
+  document.getElementById('stats').innerHTML=`
+   <div class="stat"><span>Projecten</span><b>${idx.length}</b></div>
+   <div class="stat"><span>Mediaan GO</span><b>${med(go).toFixed(1)} m²</b></div>
+   <div class="stat"><span>Kleinste · grootste</span><b>${Math.min(...go).toFixed(1)} · ${Math.max(...go).toFixed(1)} m²</b></div>
+   <div class="stat"><span>Bovenrange GO (top 15%)</span><b>${mean(gou).toFixed(1)} m²</b></div>
+   <div class="stat"><span>Mediaan betaalbaarheidsfrictie</span><b>${med(dr).toFixed(2)}</b></div>`;}
+function eqbox(fit,n,ctrls){const box=document.getElementById('eqbox');
+  if(!fit){box.innerHTML=`<span style="color:var(--muted)">Te weinig projecten voor een betrouwbare regressie (n = ${n}).</span>`;return;}
+  const p=fit.p<0.001?'< 0,001':('= '+fit.p.toFixed(3).replace('.',','));
+  const b=Math.abs(fit.bdruk).toFixed(1).replace('.',','),sign=fit.bdruk<0?'−':'+';
+  if(!ctrls||!ctrls.length){
+    box.innerHTML=`<b>GO = ${fit.intercept.toFixed(1).replace('.',',')} ${sign} ${b} × betaalbaarheidsfrictie</b><br>R² = ${fit.r2.toFixed(2).replace('.',',')} · p ${p} · n = ${fit.n}`;
+  }else{
+    const labs=ctrls.map(c=>CLAB[c]).join(', ');
+    box.innerHTML=`<b>Betaalbaarheidsfrictie-effect = ${sign}${b} m²</b> <span style="color:var(--muted)">(na correctie)</span><br>R² = ${fit.r2.toFixed(2).replace('.',',')} · p ${p} · n = ${fit.n}<br><span style="color:var(--muted)">gecorrigeerd voor: ${labs}</span>`;
+  }}
+
+/* ---------- controls ---------- */
+const MODE_META={
+  go:{step:'1 / 4',hint:'Elke stip is een project. <b>Rood = klein, blauw = groot</b> (omslag bij 65 m²). Klein klontert samen — de grootte zit niet willekeurig in de ruimte.'},
+  druk:{step:'2 / 4',hint:'Nu gekleurd op <b>betaalbaarheidsfrictie</b> (marktwaarde ÷ prijsplafond per m²).'},
+  grond:{step:'3 / 4',hint:'Groen = actief, oranje = faciliterend grondbeleid.'},
+  vraag:{step:'4 / 4',hint:'Latente vraag naar klein wonen (&lt; 55 m²) per locatie.'}
+};
+function setMode(m){
+  mode=m; studioOn=false; document.getElementById('fStudio').checked=false;
+  document.querySelectorAll('.toggle.tg5 button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  document.getElementById('stepno').textContent=MODE_META[m].step;
+  document.getElementById('modehint').innerHTML=MODE_META[m].hint;
+  // legend swap
+  const grad=document.getElementById('legwrap'),cat=document.getElementById('catleg');
+  if(CAT_MODES.has(m)){grad.style.display='none';cat.style.display='flex';
+    cat.innerHTML=`<div class="row"><span class="sw" style="background:${hx(GROND_ACT)}"></span>Actief grondbeleid (${DATA.filter(d=>d.grond===1).length})</div>
+      <div class="row"><span class="sw" style="background:${hx(GROND_FAC)}"></span>Faciliterend (${DATA.filter(d=>d.grond===0).length})</div>`;}
+  else{grad.style.display='';cat.style.display='none';}
+  styleAll();legend();
+  if(typeof runLab==='function'&&!labMod&&document.getElementById('pane-sc')&&document.getElementById('pane-sc').style.display!=='none')runLab();
+}
+document.querySelectorAll('.toggle.tg5 button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+document.getElementById('fStudio').onchange=e=>{
+  studioOn=e.target.checked;
+  document.getElementById('modehint').innerHTML=studioOn
+    ? 'Projecten met gemiddelde GO <b>onder 50 m²</b> lichten op. Zet <i>Grondbeleid</i> ernaast: de allerkleinste zitten vrijwel allemaal in faciliterend gebied — actief beleid weert ze grotendeels (zwak signaal).'
+    : MODE_META[mode].hint;
+  document.getElementById('studiocount')&&(document.getElementById('studiocount').textContent='');
+  styleAll();
+};
+function setBtn(){}
+
+let scOpen=true;
+function toggleScatter(){scOpen=!scOpen;document.getElementById('scatter').classList.toggle('hidden',!scOpen);
+  document.getElementById('sctab').classList.toggle('show',!scOpen);setTimeout(()=>map.invalidateSize(),300);}
+document.getElementById('sccollapse').onclick=toggleScatter;document.getElementById('sctab').onclick=toggleScatter;
+
+/* options panel */
+document.getElementById('optHead').onclick=()=>{const b=document.getElementById('optBody');b.classList.toggle('open');
+  document.getElementById('optChev').textContent=b.classList.contains('open')?'▴':'▾';};
+// gemeente dropdown
+const gemCounts={};DATA.forEach(d=>gemCounts[d.gem]=(gemCounts[d.gem]||0)+1);
+const gemSorted=Object.keys(gemCounts).sort((a,b)=>gemCounts[b]-gemCounts[a]||a.localeCompare(b));
+const sel0=document.getElementById('fGem');sel0.innerHTML='<option value="">Alle gemeenten ('+DATA.length+')</option>'+
+  gemSorted.map(g=>`<option value="${g}">${g} (${gemCounts[g]})</option>`).join('');
+sel0.onchange=()=>{curGem=sel0.value;applyFilter(true);};
+// year chips
+const years=[...new Set(DATA.map(d=>d.jaar))].sort();
+const yc=document.getElementById('fYears');
+yc.innerHTML=years.map(y=>`<button class="chip on" data-y="${y}">${y}</button>`).join('');
+yc.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{const y=+ch.dataset.y;
+  if(curYears.has(y)){curYears.delete(y);ch.classList.remove('on');}else{curYears.add(y);ch.classList.add('on');}
+  applyFilter(false);});
+// grondbeleid (single-select)
+const gc=document.getElementById('fGrond');
+gc.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{curGrond=ch.dataset.g;
+  gc.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===ch));applyFilter(false);});
+// reset
+document.getElementById('fReset').onclick=()=>{curGem='';sel0.value='';curYears=new Set(years);
+  yc.querySelectorAll('.chip').forEach(c=>c.classList.add('on'));
+  curGrond='';gc.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.g===''));
+  styleAll();applyFilter(true);};
+
+/* search */
+const si=document.getElementById('search'), sr=document.getElementById('searchRes');
+function syncChips(){yc.querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('on',curYears.has(+ch.dataset.y)));}
+function goTo(i){
+  if(!visible(DATA[i])){curGem='';document.getElementById('fGem').value='';curYears=new Set(years);syncChips();applyFilter(false);}
+  select(i,'scatter'); sr.innerHTML=''; si.value=DATA[i].naam;
+}
+si.addEventListener('input',()=>{const q=si.value.trim().toLowerCase();sr.innerHTML='';if(q.length<2)return;
+  const ms=DATA.map((d,i)=>({d,i})).filter(o=>o.d.naam.toLowerCase().includes(q)).slice(0,6);
+  sr.innerHTML=ms.map(o=>`<div class="sres" data-i="${o.i}">${o.d.naam} <span>· ${o.d.gem}</span></div>`).join('');
+  sr.querySelectorAll('.sres').forEach(r=>r.onclick=()=>goTo(+r.dataset.i));});
+si.addEventListener('keydown',e=>{if(e.key==='Enter'){const f=sr.querySelector('.sres');if(f)goTo(+f.dataset.i);}});
+
+/* timeline */
+const tlYears=[...years].sort((a,b)=>a-b), btn=document.getElementById('tlplay');
+let tlOn=false, tlT=null;
+function tlStop(){tlOn=false;if(tlT){clearTimeout(tlT);tlT=null;}btn.innerHTML='▶ Tijdlijn';btn.classList.remove('playing');}
+function tlPlay(){
+  if(tlOn){tlStop();curYears=new Set(years);syncChips();applyFilter(false);return;}
+  tlOn=true;btn.classList.add('playing');let k=0;
+  const tick=()=>{if(!tlOn)return;const upto=tlYears[k];
+    curYears=new Set(tlYears.filter(y=>y<=upto));syncChips();applyFilter(false);
+    btn.innerHTML='▶ t/m '+upto;k++;
+    if(k<tlYears.length)tlT=setTimeout(tick,950);
+    else tlT=setTimeout(()=>{curYears=new Set(years);syncChips();applyFilter(false);tlStop();},1200);};
+  tick();
+}
+btn.onclick=tlPlay;
+
+/* corrections (partial-residual) */
+let activeCtrls=[];
+const CORDER=['mgw','afst','jaar','mvk'];
+const CLAB={mgw:'MGW',afst:'afstand',jaar:'transactiejaar',mvk:'marktvraag'};
+function curIdx(){const a=[];DATA.forEach((d,i)=>{if(visible(d))a.push(i);});return a;}
+document.querySelectorAll('.ctrls input[data-c]').forEach(cb=>cb.onchange=()=>{
+  const c=cb.dataset.c;
+  if(cb.checked){if(!activeCtrls.includes(c))activeCtrls.push(c);}else activeCtrls=activeCtrls.filter(x=>x!==c);
+  activeCtrls.sort((a,b)=>CORDER.indexOf(a)-CORDER.indexOf(b));
+  drawScatterData(curIdx());
+  document.getElementById('cnote').textContent=activeCtrls.length?'De verticale as toont nu gecorrigeerde GO (partiële residuen). De kleur blijft de werkelijke woninggrootte.':'';
+});
+
+let rsT=null;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>map.invalidateSize(),200);});
+
+/* print + scatter image export */
+const today=new Date().toLocaleDateString('nl-NL');
+document.getElementById('printsrc').textContent='Eigen bewerking. Kaartachtergrond: © OpenStreetMap, © CARTO. Gegenereerd: '+today+'.';
+document.getElementById('printbtn').onclick=()=>window.print();
+document.getElementById('scexport').onclick=()=>{
+  const clone=document.getElementById('scsvg').cloneNode(true);
+  clone.setAttribute('xmlns',NS);
+  const st=document.createElementNS(NS,'style');st.textContent="text{font-family:'IBM Plex Sans',Arial,sans-serif}";clone.insertBefore(st,clone.firstChild);
+  const bg=document.createElementNS(NS,'rect');bg.setAttribute('width',430);bg.setAttribute('height',392);bg.setAttribute('fill','#f7f3ea');clone.insertBefore(bg,clone.firstChild);
+  const xml=new XMLSerializer().serializeToString(clone);
+  const img=new Image();
+  img.onload=()=>{const sc=2,c=document.createElement('canvas');c.width=430*sc;c.height=392*sc;const ctx=c.getContext('2d');ctx.scale(sc,sc);ctx.drawImage(img,0,0);
+    c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='scatter_betaalbaarheidsfrictie_GO.png';document.body.appendChild(a);a.click();a.remove();});};
+  img.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
+};
+
+
+/* ================= REGRESSION LAB ================= */
+const LAB_VARS=[
+  {k:'druk2',label:'Betaalbaarheidsfrictie (MGI)',key:true},
+  {k:'locv',label:'Locatiewaarde',key:true},
+  {k:'mgw',label:'Aandeel MGW'},
+  {k:'dem55',label:'Marktvraag < 55m²'},
+  {k:'grond',label:'Grondbeleid (actief)'},
+  {k:'jaar',label:'Transactiejaar'},
+  {k:'dens',label:'Dichtheid (OAD)'},
+  {k:'cost',label:'Bouwkosten (regionaal)'},
+  {k:'afst',label:'Afstand tot centrum'}
+];
+let labY='go';               // dependent
+let labActive=new Set(['druk2']);  // druk always in
+let labMod=false;
+const labSVG={W:430,H:300,padL:44,padR:16,padT:14,padB:38};
+function fmtP(p){if(p==null||isNaN(p))return '—';if(p<0.001)return '&lt;0,001';return p.toFixed(3).replace('.',',');}
+function stars(p){if(p==null||isNaN(p))return '';if(p<0.001)return '***';if(p<0.01)return '**';if(p<0.05)return '*';if(p<0.1)return '·';return '';}
+function labRows(){
+  const need=new Set([...labActive,'druk2']); // druk always needed for x-axis
+  const out=[];
+  DATA.forEach((d,i)=>{
+    if(d[labY]!=null && [...need].every(k=>d[k]!=null) && (!labMod||(d.grond!=null&&d.druk2!=null)))
+      out.push({...d,_i:i});
+  });
+  return out;
+}
+let labPtByIdx={};
+function hiLab(i,on){
+  if(typeof labPtByIdx==='undefined')return;
+  const act=on||i===sel;
+  const mk=markers[i];if(mk){const s=mStyle(DATA[i]);if(act){s.color='#1c1a17';s.weight=3;}mk.setStyle(s);if(act&&mk.bringToFront)mk.bringToFront();}
+  const c=labPtByIdx[i];if(c){c.setAttribute('r',act?6:2.9);c.setAttribute('opacity',act?1:.85);
+    if(act){c.setAttribute('stroke','#1c1a17');c.setAttribute('stroke-width',1.6);}else{c.setAttribute('stroke','#00000022');c.setAttribute('stroke-width',.5);}}
+}
+function renderChips(){
+  const wrap=document.getElementById('varchips');wrap.innerHTML='';
+  LAB_VARS.forEach(v=>{
+    const c=document.createElement('button');
+    const on=labActive.has(v.k);
+    c.className='varchip'+(v.key?(on?' keyon':' keyoff'):(on?' on':''));
+    c.textContent=v.label; c.dataset.k=v.k;
+    c.onclick=()=>{if(labActive.has(v.k))labActive.delete(v.k);else labActive.add(v.k);runLab();};
+    wrap.appendChild(c);
+  });
+}
+function runLab(){
+  renderChips();
+  const rows=labRows();
+  let xs=LAB_VARS.filter(v=>labActive.has(v.k)).map(v=>v.k);
+  // moderation requires both grond and druk in the model
+  if(labMod){
+    if(!labActive.has('druk2')){labActive.add('druk2');}
+    if(!labActive.has('grond')){labActive.add('grond');}
+    renderChips();
+    xs=LAB_VARS.filter(v=>labActive.has(v.k)).map(v=>v.k);
+  }
+  let data=rows.map(r=>({...r}));
+  if(labMod){data=data.map(r=>({...r,_int:r.grond*r.druk2}));xs=[...xs,'_int'];}
+  const SC={locv:100,dens:1000,cost:1000};   // schaal naar leesbare eenheden (per €100/m², per 1.000 OAD, per €1.000)
+  data.forEach(r=>{for(const k in SC){if(r[k]!=null)r[k]=r[k]/SC[k];}});
+  const fit=xs.length?mregFull(data,labY,xs):null;
+  drawLabPlot(fit,data);
+  drawLabTable(fit,xs);
+}
+const LAB_LABELS={'druk2':'Betaalbaarheidsfrictie (MGI)','locv':'Locatiewaarde (per €100/m²)','mgw':'Aandeel MGW','dem55':'Marktvraag <55m²','grond':'Grondbeleid','jaar':'Transactiejaar','dens':'Dichtheid (per 1.000 OAD)','cost':'Bouwkosten (per €1.000)','afst':'Afstand centrum','_int':'Grondbeleid × Betaalbaarheidsfrictie'};
+function fmtB(x){const a=Math.abs(x);
+  if(a===0)return '0';
+  if(a>=10)return x.toFixed(1).replace('.',',');
+  if(a>=1)return x.toFixed(2).replace('.',',');
+  if(a>=0.01)return x.toFixed(3).replace('.',',');
+  return x.toExponential(1).replace('.',',');}
+function drawLabTable(fit,xs){
+  const el=document.getElementById('labtable');
+  if(!fit){el.innerHTML='<div style="padding:12px;color:var(--muted);font-size:12px">Te weinig variatie of observaties voor dit model.</div>';document.getElementById('labfit').innerHTML='';return;}
+  let h='<table><tr><th>Variabele</th><th class="num">B</th><th class="num">SE</th><th class="num">p</th><th></th></tr>';
+  fit.names.forEach((nm,i)=>{
+    if(nm==='(constante)')return;
+    const B=fit.beta[i],SE=fit.se[i],P=fit.p[i],st=stars(P);
+    const isMgi=nm==='druk2';
+    const cls=isMgi?'mgi-row':(P>=0.05?'faded':'');
+    const disp=LAB_LABELS[nm]||nm;
+    h+=`<tr class="${cls}"><td class="vname">${disp}</td><td class="num">${fmtB(B)}</td><td class="num">${fmtB(SE)}</td><td class="num ${P<0.05?'star':'ns'}">${fmtP(P)}</td><td class="star">${st}</td></tr>`;
+  });
+  h+='</table>';el.innerHTML=h;
+  document.getElementById('labfit').innerHTML=
+    `Model-fit: <b class="r2">R² = ${fit.r2.toFixed(2).replace('.',',')}</b> · aangepaste R² = ${fit.adj.toFixed(2).replace('.',',')} · n = ${fit.n}<br>`+
+    `<span style="font-size:10.5px">*** p&lt;0,001 · ** p&lt;0,01 · * p&lt;0,05 · · p&lt;0,1 — grijze rijen zijn niet significant</span>`;
+}
+function drawLabPlot(fit,data){
+  const svg=document.getElementById('scsvg');svg.innerHTML='';
+  const {W,H,padL,padR,padT,padB}=labSVG;
+  const xs=data.map(r=>r.druk2),ys=data.map(r=>r[labY]);
+  const xmin=Math.min(...xs)-0.03,xmax=Math.max(...xs)+0.03;
+  const ymin=Math.max(20,Math.min(...ys)-5),ymax=Math.max(...ys)+5;
+  const X=v=>padL+(v-xmin)/(xmax-xmin)*(W-padL-padR);
+  const Y=v=>padT+(1-(v-ymin)/(ymax-ymin))*(H-padT-padB);
+  const el=(t,a)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  svg.appendChild(el('line',{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,stroke:'#cfc7ba'}));
+  svg.appendChild(el('line',{x1:padL,y1:padT,x2:padL,y2:H-padB,stroke:'#cfc7ba'}));
+  [40,60,80,100,120].forEach(t=>{if(t<ymin||t>ymax)return;const y=Y(t);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#f0ebe0'}));
+    const tx=el('text',{x:padL-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#6f685e'});tx.textContent=t;svg.appendChild(tx);});
+  [0.6,0.8,1.0,1.2,1.4].forEach(t=>{if(t<xmin||t>xmax)return;const x=X(t);
+    const tx=el('text',{x:x,y:H-padB+14,'text-anchor':'middle','font-size':9,fill:'#6f685e'});tx.textContent=t.toString().replace('.',',');svg.appendChild(tx);});
+  // points — match the map's active colour mode; in moderation, colour by land policy
+  const cAct='#2f5f5a',cFac='#c98b3a';
+  labPtByIdx={};
+  data.forEach(r=>{const col=labMod?(r.grond===1?cAct:cFac):colorFor(DATA[(r._i!=null)?r._i:DATA.indexOf(r)]);
+    const idx=(r._i!=null)?r._i:DATA.indexOf(r);
+    const c=el('circle',{cx:X(r.druk2),cy:Y(r[labY]),r:2.9,fill:col,stroke:'#00000022','stroke-width':.5,opacity:.85,cursor:'pointer'});
+    c.dataset.i=idx;
+    if(idx>=0){labPtByIdx[idx]=c;
+      c.addEventListener('mouseover',()=>hiLab(idx,true));
+      c.addEventListener('mouseout',()=>hiLab(idx,false));
+      c.addEventListener('click',()=>{sel=idx;map.panTo([DATA[idx].lat,DATA[idx].lon]);if(markers[idx])markers[idx].openPopup();hiLab(idx,true);});}
+    svg.appendChild(c);});
+  // regression line(s)
+  if(fit){
+    if(labMod){
+      // two slopes: hold other controls at mean, vary grond 0/1
+      const idxDruk=fit.names.indexOf('druk2'),idxGrond=fit.names.indexOf('grond'),idxInt=fit.names.indexOf('_int');
+      const means={};fit.names.forEach((nm,i)=>{if(nm==='(constante)')return;means[nm]=data.reduce((s,r)=>s+(nm==='_int'?r.grond*r.druk2:r[nm]),0)/data.length;});
+      function pred(grondVal,mgi){let v=fit.beta[0];fit.names.forEach((nm,i)=>{if(nm==='(constante)')return;
+        let xv; if(nm==='druk2')xv=mgi; else if(nm==='grond')xv=grondVal; else if(nm==='_int')xv=grondVal*mgi; else xv=means[nm];
+        v+=fit.beta[i]*xv;});return v;}
+      [[1,cAct],[0,cFac]].forEach(([g,col])=>{
+        svg.appendChild(el('line',{x1:X(xmin),y1:Y(pred(g,xmin)),x2:X(xmax),y2:Y(pred(g,xmax)),stroke:col,'stroke-width':2.4}));});
+      // legend
+      svg.appendChild(el('circle',{cx:W-118,cy:padT+4,r:4,fill:cAct}));const la=el('text',{x:W-110,y:padT+7,'font-size':10,fill:'#1c1a17'});la.textContent='actief';svg.appendChild(la);
+      svg.appendChild(el('circle',{cx:W-68,cy:padT+4,r:4,fill:cFac}));const lf=el('text',{x:W-60,y:padT+7,'font-size':10,fill:'#1c1a17'});lf.textContent='faciliterend';svg.appendChild(lf);
+    }else if(fit.names.indexOf('druk2')>=0){
+      // single line: druk slope holding other controls at mean
+      const means={};fit.names.forEach((nm,i)=>{if(nm==='(constante)'||nm==='druk2')return;means[nm]=data.reduce((s,r)=>s+r[nm],0)/data.length;});
+      const bd=fit.beta[fit.names.indexOf('druk2')];
+      let c0=fit.beta[0];fit.names.forEach((nm,i)=>{if(nm==='(constante)'||nm==='druk2')return;c0+=fit.beta[i]*means[nm];});
+      svg.appendChild(el('line',{x1:X(xmin),y1:Y(c0+bd*xmin),x2:X(xmax),y2:Y(c0+bd*xmax),stroke:'#9a3b2e','stroke-width':2.6}));
+    }
+  }
+  const xl=el('text',{x:W/2,y:H-4,'text-anchor':'middle','font-size':10,fill:'#6f685e'});xl.textContent='Betaalbaarheidsfrictie (MGI)';svg.appendChild(xl);
+  const yl=el('text',{x:12,y:H/2,'text-anchor':'middle','font-size':10,fill:'#6f685e',transform:`rotate(-90 12 ${H/2})`});
+  yl.textContent=(labY==='go'?'Gemiddelde':'Bovenrange')+' GO (m²)'+([...labActive].length>1?' — gecorrigeerd':'');svg.appendChild(yl);
+}
+document.getElementById('y-avg').onclick=()=>{labY='go';document.getElementById('y-avg').classList.add('on');document.getElementById('y-up').classList.remove('on');runLab();};
+document.getElementById('y-up').onclick=()=>{labY='goU';document.getElementById('y-up').classList.add('on');document.getElementById('y-avg').classList.remove('on');runLab();};
+document.getElementById('modChk').onchange=e=>{labMod=e.target.checked;runLab();};
+
+
+const RESULTS = {"moran":[["Ruwe woninggrootte (GO)",0.451,0.001],["Betaalbaarheidsfrictie (MGI)",0.615,0.001],["Residuen (GO ~ MGI)",0.071,0.076],["Residuen + afstand & MGW",0.028,0.265]],"mod":{"actief":{"b0":128.49,"b1":-64.06,"n":43,"xmin":0.4617,"xmax":1.475},"facil":{"b0":112.71,"b1":-54.42,"n":55,"xmin":0.6038,"xmax":1.5031}},"inter_p":0.754,"logit":{"mgi":[0.462,0.483,0.504,0.525,0.547,0.568,0.589,0.61,0.632,0.653,0.674,0.695,0.717,0.738,0.759,0.78,0.802,0.823,0.844,0.866,0.887,0.908,0.929,0.951,0.972,0.993,1.014,1.036,1.057,1.078,1.099,1.121,1.142,1.163,1.184,1.206,1.227,1.248,1.269,1.291,1.312,1.333,1.354,1.376,1.397,1.418,1.439,1.461,1.482,1.503],"actief":[0.001,0.0011,0.0014,0.0016,0.002,0.0023,0.0028,0.0034,0.004,0.0048,0.0057,0.0068,0.0082,0.0097,0.0116,0.0139,0.0165,0.0197,0.0235,0.028,0.0333,0.0395,0.0469,0.0555,0.0657,0.0776,0.0914,0.1073,0.1257,0.1467,0.1705,0.1974,0.2272,0.2601,0.296,0.3345,0.3755,0.4182,0.4623,0.5069,0.5514,0.5951,0.6374,0.6776,0.7154,0.7503,0.7823,0.8112,0.8371,0.86],"facil":[0.0035,0.0042,0.005,0.0059,0.0071,0.0085,0.0101,0.0121,0.0144,0.0172,0.0205,0.0244,0.029,0.0345,0.041,0.0486,0.0576,0.0681,0.0803,0.0946,0.111,0.13,0.1515,0.176,0.2034,0.234,0.2675,0.304,0.3431,0.3844,0.4275,0.4717,0.5164,0.5608,0.6042,0.6461,0.6859,0.723,0.7574,0.7887,0.817,0.8422,0.8646,0.8842,0.9013,0.9161,0.9288,0.9398,0.9491,0.9571],"or_land":0.275,"p_land":0.049,"or_mgi_01":2.319,"p_mgi":0.001},"scatter":[{"x":1.141,"y":55.3,"g":1},{"x":0.946,"y":53.1,"g":1},{"x":1.093,"y":55.2,"g":0},{"x":1.093,"y":56.4,"g":0},{"x":1.093,"y":52.0,"g":0},{"x":0.966,"y":76.4,"g":1},{"x":1.017,"y":45.3,"g":1},{"x":0.936,"y":80.2,"g":1},{"x":1.064,"y":48.2,"g":0},{"x":1.118,"y":50.0,"g":1},{"x":0.93,"y":67.9,"g":1},{"x":1.06,"y":58.4,"g":0},{"x":1.107,"y":47.2,"g":0},{"x":1.067,"y":59.4,"g":0},{"x":1.083,"y":39.2,"g":0},{"x":1.141,"y":53.8,"g":0},{"x":1.009,"y":63.4,"g":1},{"x":1.199,"y":49.8,"g":0},{"x":0.767,"y":71.5,"g":0},{"x":0.923,"y":63.2,"g":0},{"x":0.908,"y":76.3,"g":0},{"x":1.016,"y":30.3,"g":0},{"x":1.132,"y":48.0,"g":0},{"x":1.023,"y":51.1,"g":0},{"x":0.929,"y":72.0,"g":0},{"x":0.856,"y":68.7,"g":0},{"x":0.858,"y":70.8,"g":0},{"x":0.855,"y":59.7,"g":0},{"x":0.801,"y":79.8,"g":0},{"x":1.19,"y":41.2,"g":0},{"x":0.813,"y":74.6,"g":0},{"x":1.045,"y":61.5,"g":0},{"x":0.67,"y":55.7,"g":0},{"x":1.061,"y":49.9,"g":0},{"x":1.098,"y":61.1,"g":0},{"x":1.061,"y":61.4,"g":0},{"x":1.204,"y":51.6,"g":1},{"x":1.059,"y":40.4,"g":0},{"x":1.088,"y":59.6,"g":0},{"x":1.097,"y":49.0,"g":0},{"x":1.09,"y":55.8,"g":0},{"x":0.913,"y":49.1,"g":0},{"x":0.913,"y":62.7,"g":0},{"x":0.63,"y":67.0,"g":1},{"x":0.996,"y":59.1,"g":1},{"x":0.681,"y":66.6,"g":0},{"x":1.023,"y":60.5,"g":1},{"x":0.594,"y":114.0,"g":1},{"x":0.85,"y":75.0,"g":0},{"x":0.462,"y":127.4,"g":1},{"x":0.955,"y":60.0,"g":0},{"x":0.946,"y":64.1,"g":0},{"x":0.944,"y":83.9,"g":1},{"x":0.963,"y":63.1,"g":1},{"x":0.908,"y":69.7,"g":1},{"x":0.706,"y":97.0,"g":1},{"x":1.01,"y":60.9,"g":1},{"x":0.662,"y":102.7,"g":0},{"x":0.721,"y":80.8,"g":1},{"x":0.604,"y":87.1,"g":0},{"x":1.033,"y":61.1,"g":0},{"x":0.977,"y":64.4,"g":0},{"x":1.008,"y":54.8,"g":0},{"x":1.204,"y":30.7,"g":1},{"x":1.01,"y":55.7,"g":1},{"x":1.132,"y":45.0,"g":0},{"x":1.132,"y":50.2,"g":1},{"x":1.284,"y":50.5,"g":1},{"x":1.238,"y":51.4,"g":1},{"x":0.963,"y":44.8,"g":0},{"x":1.503,"y":36.6,"g":0},{"x":0.991,"y":55.6,"g":0},{"x":1.103,"y":70.1,"g":1},{"x":1.133,"y":43.2,"g":1},{"x":1.369,"y":45.2,"g":0},{"x":1.267,"y":50.0,"g":1},{"x":0.969,"y":52.7,"g":1},{"x":1.149,"y":52.1,"g":1},{"x":1.475,"y":46.7,"g":1},{"x":1.475,"y":49.7,"g":1},{"x":1.001,"y":46.1,"g":1},{"x":1.083,"y":63.4,"g":1},{"x":0.914,"y":49.7,"g":1},{"x":0.966,"y":53.7,"g":0},{"x":1.423,"y":45.7,"g":1},{"x":0.987,"y":65.1,"g":1},{"x":1.321,"y":50.0,"g":1},{"x":1.103,"y":70.0,"g":1},{"x":1.379,"y":41.5,"g":0},{"x":1.32,"y":49.5,"g":1},{"x":0.76,"y":70.6,"g":1},{"x":0.75,"y":82.7,"g":1},{"x":0.685,"y":64.0,"g":0},{"x":1.026,"y":55.0,"g":0},{"x":0.896,"y":70.0,"g":0},{"x":1.019,"y":55.2,"g":0},{"x":0.992,"y":81.7,"g":0},{"x":0.928,"y":68.0,"g":1}],"main":{"per01":-4.36,"r2":0.7,"p":"<.001"}};
+function svgEl(tag,attrs){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function drawMoran(){
+  const svg=document.getElementById('moransvg');svg.innerHTML='';
+  const W=430,H=220,padL=150,padR=30,padT=14,padB=28;
+  const rows=RESULTS.moran; // [label, I, p]
+  const maxI=0.7;
+  const bw=(W-padL-padR)/maxI;
+  const rh=(H-padT-padB)/rows.length;
+  // threshold line at significance-ish visual: draw axis
+  rows.forEach((row,i)=>{
+    const[lab,I,p]=row;const y=padT+i*rh+rh/2;
+    const sig=p<0.05;
+    const col=sig?'#9a3b2e':'#8f9b86';
+    // label
+    const t=svgEl('text',{x:padL-8,y:y+4,'text-anchor':'end','font-size':11,'font-family':'Georgia,serif',fill:'#1c1a17'});t.textContent=lab;svg.appendChild(t);
+    // bar
+    svg.appendChild(svgEl('rect',{x:padL,y:y-8,width:Math.max(1,I*bw),height:16,rx:3,fill:col,opacity:sig?0.9:0.55}));
+    // value
+    const v=svgEl('text',{x:padL+I*bw+6,y:y+4,'font-size':11,'font-weight':'bold','font-family':'Georgia,serif',fill:col});
+    v.textContent='I = '+I.toFixed(2).replace('.',',')+(sig?'':' (n.s.)');svg.appendChild(v);
+  });
+  // x axis baseline
+  svg.appendChild(svgEl('line',{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,stroke:'#e4ddd1'}));
+  [0,0.2,0.4,0.6].forEach(tk=>{const x=padL+tk*bw;
+    svg.appendChild(svgEl('line',{x1:x,y1:padT,x2:x,y2:H-padB,stroke:'#f0ebe0'}));
+    const t=svgEl('text',{x:x,y:H-padB+16,'text-anchor':'middle','font-size':9,fill:'#6f685e'});t.textContent=tk.toString().replace('.',',');svg.appendChild(t);});
+  document.getElementById('morancap').innerHTML='Sterke clustering in de <b>ruwe</b> data (rood, p&lt;0,001) valt weg in de <b>residuen</b> (grijs, n.s.). <b class="good">Betaalbaarheidsfrictie absorbeert de geografie</b> — geen apart ruimtelijk model nodig.';
+}
+function drawModeration(){
+  const svg=document.getElementById('modsvg');svg.innerHTML='';
+  const W=430,H=300,padL=42,padR=16,padT=16,padB=40;
+  const xmin=0.45,xmax=1.55,ymin=20,ymax=130;
+  const X=v=>padL+(v-xmin)/(xmax-xmin)*(W-padL-padR);
+  const Y=v=>padT+(1-(v-ymin)/(ymax-ymin))*(H-padT-padB);
+  // grid + axes
+  svg.appendChild(svgEl('line',{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,stroke:'#cfc7ba'}));
+  svg.appendChild(svgEl('line',{x1:padL,y1:padT,x2:padL,y2:H-padB,stroke:'#cfc7ba'}));
+  [40,60,80,100,120].forEach(t=>{const y=Y(t);svg.appendChild(svgEl('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#f0ebe0'}));
+    const tx=svgEl('text',{x:padL-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#6f685e'});tx.textContent=t;svg.appendChild(tx);});
+  [0.6,0.8,1.0,1.2,1.4].forEach(t=>{const x=X(t);
+    const tx=svgEl('text',{x:x,y:H-padB+15,'text-anchor':'middle','font-size':9,fill:'#6f685e'});tx.textContent=t.toString().replace('.',',');svg.appendChild(tx);});
+  // MGI=1 reference
+  svg.appendChild(svgEl('line',{x1:X(1),y1:padT,x2:X(1),y2:H-padB,stroke:'#d9d3c6','stroke-dasharray':'3 3'}));
+  // points
+  const cAct='#2f5f5a',cFac='#c98b3a';
+  RESULTS.scatter.forEach(p=>{svg.appendChild(svgEl('circle',{cx:X(p.x),cy:Y(p.y),r:2.6,fill:p.g===1?cAct:cFac,opacity:0.55}));});
+  // two slopes
+  const m=RESULTS.mod;
+  function line(o,col){const x1=Math.max(xmin,o.xmin),x2=Math.min(xmax,o.xmax);
+    svg.appendChild(svgEl('line',{x1:X(x1),y1:Y(o.b0+o.b1*x1),x2:X(x2),y2:Y(o.b0+o.b1*x2),stroke:col,'stroke-width':2.4}));}
+  line(m.actief,cAct);line(m.facil,cFac);
+  // axis labels
+  const xl=svgEl('text',{x:(W)/2,y:H-6,'text-anchor':'middle','font-size':10,fill:'#6f685e'});xl.textContent='Betaalbaarheidsfrictie (MGI)';svg.appendChild(xl);
+  const yl=svgEl('text',{x:13,y:H/2,'text-anchor':'middle','font-size':10,fill:'#6f685e',transform:`rotate(-90 13 ${H/2})`});yl.textContent='Gem. woningoppervlak (m²)';svg.appendChild(yl);
+  // legend
+  svg.appendChild(svgEl('circle',{cx:W-120,cy:padT+6,r:4,fill:cAct}));
+  const la=svgEl('text',{x:W-112,y:padT+9,'font-size':10,fill:'#1c1a17'});la.textContent='actief';svg.appendChild(la);
+  svg.appendChild(svgEl('circle',{cx:W-70,cy:padT+6,r:4,fill:cFac}));
+  const lf=svgEl('text',{x:W-62,y:padT+9,'font-size':10,fill:'#1c1a17'});lf.textContent='faciliterend';svg.appendChild(lf);
+  document.getElementById('modcap').innerHTML='De lijnen lopen vrijwel <b>parallel</b> (interactie p = '+RESULTS.inter_p.toString().replace('.',',')+', n.s.). Beide regimes krimpen even hard als de druk stijgt: <b class="good">grondbeleid dempt de compressie niet</b> (H1a verworpen).';
+}
+function drawLogistic(){
+  const svg=document.getElementById('logsvg');svg.innerHTML='';
+  const W=430,H=300,padL=42,padR=16,padT=16,padB=40;
+  const L=RESULTS.logit;
+  const xmin=Math.min(...L.mgi),xmax=Math.max(...L.mgi);
+  const X=v=>padL+(v-xmin)/(xmax-xmin)*(W-padL-padR);
+  const Y=v=>padT+(1-v)*(H-padT-padB);
+  svg.appendChild(svgEl('line',{x1:padL,y1:H-padB,x2:W-padR,y2:H-padB,stroke:'#cfc7ba'}));
+  svg.appendChild(svgEl('line',{x1:padL,y1:padT,x2:padL,y2:H-padB,stroke:'#cfc7ba'}));
+  [0,0.25,0.5,0.75,1].forEach(t=>{const y=Y(t);svg.appendChild(svgEl('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#f0ebe0'}));
+    const tx=svgEl('text',{x:padL-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#6f685e'});tx.textContent=Math.round(t*100)+'%';svg.appendChild(tx);});
+  [0.6,0.8,1.0,1.2,1.4].forEach(t=>{if(t<xmin||t>xmax)return;const x=X(t);
+    const tx=svgEl('text',{x:x,y:H-padB+15,'text-anchor':'middle','font-size':9,fill:'#6f685e'});tx.textContent=t.toString().replace('.',',');svg.appendChild(tx);});
+  function curve(arr,col,dash){let d='';L.mgi.forEach((mg,i)=>{d+=(i?'L':'M')+X(mg)+' '+Y(arr[i]);});
+    svg.appendChild(svgEl('path',{d:d,fill:'none',stroke:col,'stroke-width':2.4,'stroke-dasharray':dash||'none'}));}
+  curve(L.facil,'#c98b3a');curve(L.actief,'#2f5f5a');
+  const xl=svgEl('text',{x:W/2,y:H-6,'text-anchor':'middle','font-size':10,fill:'#6f685e'});xl.textContent='Betaalbaarheidsfrictie (MGI)';svg.appendChild(xl);
+  const yl=svgEl('text',{x:13,y:H/2,'text-anchor':'middle','font-size':10,fill:'#6f685e',transform:`rotate(-90 13 ${H/2})`});yl.textContent='Kans op woning < 50 m²';svg.appendChild(yl);
+  svg.appendChild(svgEl('circle',{cx:W-120,cy:padT+6,r:4,fill:'#2f5f5a'}));
+  const la=svgEl('text',{x:W-112,y:padT+9,'font-size':10,fill:'#1c1a17'});la.textContent='actief';svg.appendChild(la);
+  svg.appendChild(svgEl('circle',{cx:W-70,cy:padT+6,r:4,fill:'#c98b3a'}));
+  const lf=svgEl('text',{x:W-62,y:padT+9,'font-size':10,fill:'#1c1a17'});lf.textContent='faciliterend';svg.appendChild(lf);
+  const orMgi=L.or_mgi_01.toString().replace('.',',');
+  document.getElementById('logcap').innerHTML='Betaalbaarheidsfrictie verhoogt de kans fors ('+orMgi+'× per 0,1; p&lt;0,01). Onder <b>actief</b> grondbeleid ligt de curve lager: <b class="good">~'+Math.round((1-RESULTS.logit.or_land)*100)+'% lagere kans</b> op kleine woonproducten (p = '+RESULTS.logit.p_land.toString().replace('.',',')+'). Grondbeleid beïnvloedt de kans op het verschijnen van de allerkleinste woonproducten op de markt — een bescheiden maar significant signaal.';
+}
+function drawResults(){drawMoran();drawModeration();drawLogistic();}
+
+// tab switching
+function showTab(which){
+  const panes={sc:'pane-sc',res:'pane-res',calc:'pane-calc'};
+  for(const k in panes){document.getElementById('tab-'+k).classList.toggle('on',k===which);
+    document.getElementById(panes[k]).style.display=(k===which)?'':'none';}
+  if(which==='res')drawResults();
+  if(which==='calc')drawFrictie();
+}
+document.getElementById('tab-sc').onclick=()=>showTab('sc');
+document.getElementById('tab-res').onclick=()=>showTab('res');
+document.getElementById('tab-calc').onclick=()=>showTab('calc');
+
+/* ---- frictie-uitleg: krimpend vierkant ---- */
+function fmtEuro(x){return '€ '+Math.round(x).toLocaleString('nl-NL');}
+const kk=v=>'€'+Math.round(v/1000)+'k';
+function roomsFor(go){
+  if(go<40)return{bed:0,lbl:'studio'};
+  if(go<55)return{bed:1,lbl:'2-kamer'};
+  if(go<72)return{bed:2,lbl:'3-kamer'};
+  if(go<92)return{bed:3,lbl:'4-kamer'};
+  return{bed:4,lbl:'5-kamer'};
+}
+function drawPlan(svg,x,yTop,W,H,go,fric){
+  const ink='#1c1a17';
+  const R=a=>svg.appendChild(svgEl('rect',a));
+  const L=a=>svg.appendChild(svgEl('line',Object.assign({stroke:ink},a)));
+  const info=roomsFor(go);
+  // interne tint (frictiekleur, licht) — houdt de koppeling met de kaart
+  R({x,y:yTop,width:W,height:H,fill:fricColor(fric),'fill-opacity':0.16});
+  const wall=a=>L(Object.assign({'stroke-width':1.1},a));
+  const bedGlyph=(bx,by,bw,bh)=>{R({x:bx,y:by,width:bw,height:bh,rx:2,fill:'#fff','fill-opacity':.5,stroke:ink,'stroke-width':.7});
+    L({x1:bx,y1:by+bh*0.34,x2:bx+bw,y2:by+bh*0.34,'stroke-width':.6});};
+  const rW=info.bed?W*(info.bed>=3?0.46:0.40):0, lW=W-rW;
+  if(info.bed){
+    const wx=x+lW;                                   // wand woonkamer | slaapkamers, met deuropening
+    wall({x1:wx,y1:yTop,x2:wx,y2:yTop+H*0.44});
+    wall({x1:wx,y1:yTop+H*0.62,x2:wx,y2:yTop+H});
+    const bh=H/info.bed;
+    for(let i=0;i<info.bed;i++){
+      const ry=yTop+i*bh;
+      if(i>0)wall({x1:wx,y1:ry,x2:x+W,y2:ry});
+      const bw=Math.min(rW*0.62,bh*0.72), bhh=Math.min(bh*0.6,rW*0.72);
+      if(bw>4&&bhh>4)bedGlyph(x+W-bw-3,ry+bh/2-bhh/2,bw,bhh);
+    }
+  }
+  // badkamer (linksonder)
+  const twW=Math.min(lW*0.34,26), twH=Math.min(H*0.3,24);
+  if(twW>6&&twH>6){R({x:x+2.5,y:yTop+H-twH-2.5,width:twW,height:twH,fill:'#fff','fill-opacity':.45,stroke:ink,'stroke-width':.8});
+    svg.appendChild(svgEl('circle',{cx:x+2.5+twW*0.5,cy:yTop+H-twH*0.5-2.5,r:2.3,fill:'none',stroke:ink,'stroke-width':.6}));}
+  // keukenblok (linksboven)
+  L({x1:x+3,y1:yTop+3.5,x2:x+Math.max(lW*0.5,10),y2:yTop+3.5,'stroke-width':2.3});
+  // bank in de woonkamer
+  const sf=Math.min(lW*0.42,30);
+  if(sf>8)R({x:x+lW*0.5-sf/2,y:yTop+H*0.44,width:sf,height:sf*0.42,rx:2,fill:'#fff','fill-opacity':.45,stroke:ink,'stroke-width':.7});
+  // studio: bed-alkoof rechtsboven
+  if(!info.bed){const bw=Math.min(W*0.34,32);bedGlyph(x+W-bw-3,yTop+3,bw,bw*0.66);}
+  // buitenmuur (bovenop)
+  R({x,y:yTop,width:W,height:H,fill:'none',stroke:ink,'stroke-width':2.4});
+  return info;
+}
+function drawFrictie(){
+  const cap=+document.getElementById('c-nhg').value;
+  const mv =+document.getElementById('c-loc').value;
+  const aan=+document.getElementById('c-aan').value;
+  const bij=+document.getElementById('c-bij').value;
+  const vf =+document.getElementById('c-vf').value;
+  const bvo=+document.getElementById('c-bvo').value;
+  const ref=65, devM2=aan+bij;
+  const goFull=bvo*vf, goC=Math.min(goFull, cap/mv);
+  const fric=mv*ref/cap, size=cap/mv;          // betaalbare grootte bij 65-referentie (= scenario C)
+  // parameter-uitlezingen
+  document.getElementById('c-nhg-o').textContent=fmtEuro(cap);
+  document.getElementById('c-loc-o').textContent=fmtEuro(mv);
+  document.getElementById('c-aan-o').textContent=fmtEuro(aan);
+  document.getElementById('c-bij-o').textContent=fmtEuro(bij);
+  document.getElementById('c-vf-o').textContent=vf.toFixed(2).replace('.',',');
+  document.getElementById('c-bvo-o').textContent=bvo+' m²';
+  document.getElementById('c-sk-o').textContent=fmtEuro(devM2)+' /m²';
+  document.getElementById('c-go-o').textContent=goFull.toFixed(1).replace('.',',')+' m²';
+  // ---- 1: plattegrond ----
+  const svg=document.getElementById('calcsvg');svg.innerHTML='';
+  const AR=1.4, PXPM2=215, byBot=222, x0=28;
+  const dims=g=>{const W=Math.sqrt(Math.min(g,160)*PXPM2*AR);return{W,H:W/AR};};
+  const rfd=dims(ref), acd=dims(size);
+  svg.appendChild(svgEl('rect',{x:x0,y:byBot-rfd.H,width:rfd.W,height:rfd.H,fill:'none',stroke:'#b9b1a2','stroke-width':1.4,'stroke-dasharray':'5 4'}));
+  const rl=svgEl('text',{x:x0,y:byBot-rfd.H-8,'font-size':10,fill:'#8a8377'});rl.textContent='65 m² · referentie';svg.appendChild(rl);
+  const info=drawPlan(svg,x0,byBot-acd.H,acd.W,acd.H,size,fric);
+  const sl=svgEl('text',{x:x0+acd.W/2,y:byBot+16,'text-anchor':'middle','font-size':11.5,'font-weight':600,fill:'#1c1a17'});
+  sl.textContent=size.toFixed(0)+' m² · '+info.lbl;svg.appendChild(sl);
+  const bx=268, by=58;
+  const t1=svgEl('text',{x:bx,y:by,'font-size':12,fill:'#6f685e'});t1.textContent='Betaalbaarheidsfrictie';svg.appendChild(t1);
+  const fv=svgEl('text',{x:bx,y:by+40,'font-size':40,'font-weight':600,fill:fric>1?'#8e2422':'#2f5f5a','font-family':"'Fraunces',serif"});
+  fv.textContent=fric.toFixed(2).replace('.',',');svg.appendChild(fv);
+  const t2=svgEl('text',{x:bx,y:by+60,'font-size':11,fill:'#6f685e'});
+  t2.textContent=fric>1?'boven het plafond → krimp':(fric<1?'onder het plafond → ruimte':'op het plafond');svg.appendChild(t2);
+  const dd=size-ref;
+  const t3=svgEl('text',{x:bx,y:by+88,'font-size':13,'font-weight':600,fill:'#1c1a17'});
+  t3.textContent=(dd>=0?'+':'−')+Math.abs(dd).toFixed(0)+' m² t.o.v. 65';svg.appendChild(t3);
+  document.getElementById('calcout').innerHTML=
+    `Het plafond laat maximaal <b>${fmtEuro(cap/ref)}/m²</b> toe (plafond&nbsp;÷&nbsp;65). De markt vraagt <b>${fmtEuro(mv)}/m²</b> → frictie <b>${fric.toFixed(2).replace('.',',')}</b>. `+
+    `Voor ${fmtEuro(cap)} koop je hier <b>${size.toFixed(0)} m²</b> — `+
+    (fric>1?`<b class="warn">${(ref-size).toFixed(0)} m² kleiner</b> dan de referentie. Dat is scenario C in de grafiek.`
+      :fric<1?`<b class="good">${(size-ref).toFixed(0)} m² ruimer</b> — het plafond is niet bindend, dus geen frictie.`
+      :`precies 65 m².`);
+  // ---- 2: waterval ----
+  const scen=(nfa,capped)=>{const mvu=nfa*mv;const rev=capped?Math.min(mvu,cap):mvu;
+    return{nfa,mvu,rev,disc:mvu-rev,cost:(nfa/vf)*devM2,res:rev-(nfa/vf)*devM2};};
+  drawWaterfall(scen(goFull,false),scen(goFull,true),scen(goC,true));
+}
+function drawWaterfall(A,B,C){
+  const svg=document.getElementById('wfsvg');svg.innerHTML='';
+  const W=440,H=320,padL=42,padR=10,padT=36,padB=64;
+  const yMax=Math.max(A.mvu,B.mvu,C.mvu,1)*1.05;
+  const Y=v=>padT+(1-v/yMax)*(H-padT-padB);
+  const base=Y(0), step=yMax>460000?100000:50000;
+  for(let g=0;g<=yMax;g+=step){const y=Y(g);
+    svg.appendChild(svgEl('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#efe9dd'}));
+    const tx=svgEl('text',{x:padL-5,y:y+3,'text-anchor':'end','font-size':8,fill:'#8a8377'});tx.textContent='€'+(g/1000)+'k';svg.appendChild(tx);}
+  const COL={mw:'#332f28',disc:'#ccb4a2',cost:'#e0d8ca',res:'#9a3b2e'};
+  const panelW=(W-padL-padR)/3, titles={A:'marktconform',B:'grootte vast',C:'verkleind'};
+  [['A',A],['B',B],['C',C]].forEach(([k,d],i)=>{
+    const x0=padL+i*panelW;
+    if(i>0)svg.appendChild(svgEl('line',{x1:x0,y1:padT-4,x2:x0,y2:base,stroke:'#efe9dd'}));
+    const tt=svgEl('text',{x:x0+panelW/2,y:padT-18,'text-anchor':'middle','font-size':11,'font-weight':600,fill:'#1c1a17','font-family':"'Fraunces',serif"});tt.textContent=k;svg.appendChild(tt);
+    const ts=svgEl('text',{x:x0+panelW/2,y:padT-6,'text-anchor':'middle','font-size':8,fill:'#6f685e'});ts.textContent=titles[k];svg.appendChild(ts);
+    const bw=panelW*0.15, gap=(panelW-4*bw)/5, bx=j=>x0+gap+j*(bw+gap);
+    const lab=(x,y,txt,col)=>{const t=svgEl('text',{x:x,y:y,'text-anchor':'middle','font-size':7.5,'font-weight':600,fill:col||'#4a443c'});t.textContent=txt;svg.appendChild(t);};
+    // marktwaarde 0 -> mvu
+    svg.appendChild(svgEl('rect',{x:bx(0),y:Y(d.mvu),width:bw,height:base-Y(d.mvu),fill:COL.mw}));
+    lab(bx(0)+bw/2,Y(d.mvu)-4,kk(d.mvu));
+    svg.appendChild(svgEl('line',{x1:bx(0)+bw,y1:Y(d.mvu),x2:bx(1),y2:Y(d.mvu),stroke:'#c3bbac','stroke-dasharray':'2 2','stroke-width':.7}));
+    // korting rev -> mvu
+    if(d.disc>yMax*0.01){
+      svg.appendChild(svgEl('rect',{x:bx(1),y:Y(d.mvu),width:bw,height:Y(d.rev)-Y(d.mvu),fill:COL.disc}));
+      lab(bx(1)+bw/2,Y(d.mvu)-4,'−'+kk(d.disc),'#9a3b2e');
+    }else{
+      svg.appendChild(svgEl('line',{x1:bx(1),y1:Y(d.mvu),x2:bx(1)+bw,y2:Y(d.mvu),stroke:'#8a8377','stroke-dasharray':'3 2','stroke-width':1}));
+      lab(bx(1)+bw/2,Y(d.mvu)-4,'+€0k','#8a8377');
+    }
+    svg.appendChild(svgEl('line',{x1:bx(1)+bw,y1:Y(d.rev),x2:bx(2),y2:Y(d.rev),stroke:'#c3bbac','stroke-dasharray':'2 2','stroke-width':.7}));
+    // stichtingskosten res -> rev
+    svg.appendChild(svgEl('rect',{x:bx(2),y:Y(d.rev),width:bw,height:Y(d.res)-Y(d.rev),fill:COL.cost}));
+    lab(bx(2)+bw/2,Y(d.rev)-4,'−'+kk(d.cost));
+    svg.appendChild(svgEl('line',{x1:bx(2)+bw,y1:Y(d.res),x2:bx(3),y2:Y(d.res),stroke:'#c3bbac','stroke-dasharray':'2 2','stroke-width':.7}));
+    // grondwaarde 0 -> res
+    svg.appendChild(svgEl('rect',{x:bx(3),y:Y(d.res),width:bw,height:base-Y(d.res),fill:COL.res}));
+    lab(bx(3)+bw/2,Y(d.res)-4,kk(d.res),'#9a3b2e');
+  });
+  svg.appendChild(svgEl('line',{x1:padL,y1:base,x2:W-padR,y2:base,stroke:'#cfc7ba'}));
+  const lg=[['Marktwaarde',COL.mw],['− Korting',COL.disc],['− Stichtingsk.',COL.cost],['Grondwaarde',COL.res]];
+  let lx=padL;const ly=H-16;
+  lg.forEach(([t,c])=>{svg.appendChild(svgEl('rect',{x:lx,y:ly-7,width:8,height:8,fill:c,rx:1}));
+    const tt=svgEl('text',{x:lx+11,y:ly,'font-size':8,fill:'#4a443c'});tt.textContent=t;svg.appendChild(tt);
+    lx+=11+t.length*4.4+12;});
+  const lossB=A.res-B.res, lossC=A.res-C.res;
+  document.getElementById('wfout').innerHTML = B.disc<1
+    ? `De marktwaarde ligt onder het plafond — niet bindend, dus geen frictie en geen prikkel tot verkleinen. A, B en C vallen samen.`
+    : `Grootte vasthouden (<b>B</b>) kost <b class="warn">${kk(lossB)}</b> grondwaarde per woning — die korting lekt weg naar de koper. Verkleinen (<b>C</b>) behoudt de waarde grotendeels: nog maar <b class="good">${kk(lossC)}</b> verlies. De keuze die de grondwaarde maximaliseert, wijst zo naar de <b>kleinere woning</b> — de prikkel loopt mét de krimp mee.`;
+}
+['c-nhg','c-loc','c-aan','c-bij','c-vf','c-bvo'].forEach(id=>document.getElementById(id).oninput=drawFrictie);
+
+/* ---- info-modal (nieuwsbericht) ---- */
+(function(){const m=document.getElementById('infoModal');
+  document.getElementById('infodot').onclick=()=>m.classList.add('open');
+  document.getElementById('infoClose').onclick=()=>m.classList.remove('open');
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')m.classList.remove('open');});
+})();
+/* ---- positie-editor (verborgen; activeer door #edit achter de URL) ---- */
+if(location.hash.toLowerCase().includes('edit')){
+  const changes={}; let esel=-1;
+  const bar=document.createElement('div'); bar.id='editbar';
+  bar.innerHTML='<b>Positie-editor</b> <span id="editmsg">Klik een project, klik daarna de juiste plek op de kaart.</span><button id="editexport">Exporteer wijzigingen</button>';
+  document.body.appendChild(bar);
+  const msg=t=>document.getElementById('editmsg').textContent=t;
+  markers.forEach((mk,i)=>{
+    mk.off('click'); if(mk.unbindPopup)mk.unbindPopup();
+    mk.on('click',e=>{ if(e&&e.originalEvent)L.DomEvent.stopPropagation(e);
+      if(esel>=0&&esel!==i)hi(esel,false); esel=i; hi(i,true);
+      msg('Geselecteerd: '+DATA[i].naam+' — klik nu de juiste plek.'); });
+  });
+  map.on('click',e=>{ if(esel<0){msg('Selecteer eerst een project.');return;}
+    const la=+e.latlng.lat.toFixed(6), lo=+e.latlng.lng.toFixed(6);
+    markers[esel].setLatLng([la,lo]); markers[esel].setStyle({color:'#2f5f5a',weight:3});
+    DATA[esel].lat=la; DATA[esel].lon=lo; changes[DATA[esel].naam]=[la,lo];
+    msg(DATA[esel].naam+' verplaatst ✓  ('+Object.keys(changes).length+' wijziging(en)) — selecteer het volgende project.'); });
+  document.getElementById('editexport').onclick=()=>{
+    const n=Object.keys(changes).length; if(!n){msg('Nog geen wijzigingen om te exporteren.');return;}
+    const ta=document.createElement('textarea'); ta.value=JSON.stringify(changes,null,1);
+    ta.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,80vw);height:50vh;z-index:99999;font:12px/1.4 monospace;padding:14px;border:2px solid #1c1a17;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.4)';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    msg(n+' wijziging(en) gekopieerd — plak ze in de chat. Klik in het tekstvak-af om te sluiten.');
+    ta.addEventListener('blur',()=>ta.remove()); };
+}
+buildScatter();applyFilter(false);setMode('go');runLab();showTab('calc');
+</script>
+</body>
+</html>
